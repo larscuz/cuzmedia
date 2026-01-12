@@ -14,8 +14,8 @@ const About: React.FC = () => {
         >
           <h2 className="text-xs font-bold tracking-[0.5em] text-gray-500 mb-10 uppercase">Our Approach</h2>
           <p className="text-3xl md:text-5xl font-light leading-tight tracking-tight">
-            I 2026 er KI-reklame standard.
-Vi er et studio som jobber  <span className="italic">i skjæringspunktet mellom</span>  kultur og <span className="font-medium">intelligent teknologi.</span>
+            AI i reklame ble standard fort.
+Ting ble raskere <span className="italic">og billigere.</span> Ny teknologi.<span className="font-medium"> Ny tid.</span>
           </p>
         </motion.div>
 
@@ -31,8 +31,8 @@ Vi er et studio som jobber  <span className="italic">i skjæringspunktet mellom<
               Mens etablerte aktører snakker om talentmangel,
 ansetter vi dem.
 
-Cuz Media kombinerer lærlinger, KI og strategi til digitale identiteter som faktisk treffer.
-Minimalistisk utførelse. Maksimal effekt.
+Cuz Media kombinerer AI, lærliger og strategi til digitale identiteter.
+Rask, billig, laget av unge som har tid og trenger en jobb.
             </p>
             <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10">
               <div>
