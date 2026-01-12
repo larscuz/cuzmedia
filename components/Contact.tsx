@@ -14,10 +14,10 @@ const Contact: React.FC = () => {
         >
           <h2 className="text-xs font-bold tracking-[0.5em] text-gray-500 mb-16 uppercase italic">Start a Conversation</h2>
           <a 
-            href="mailto:hello@cuzmedia.no"
-            className="text-5xl md:text-[10vw] font-bold tracking-tighter leading-none hover:italic hover:opacity-70 transition-all duration-500 break-all"
+            href="mailto:x@larscuzner.com"
+            className="text-5xl md:text-[3vw] font-bold tracking-tighter leading-none hover:italic hover:opacity-70 transition-all duration-500 break-all"
           >
-            x@larscuzner.com
+            lars@larscuzner.com
           </a>
           <div className="mt-24 md:mt-48 flex flex-col md:flex-row justify-center items-center gap-12 md:gap-32 opacity-50 text-sm font-light">
             <div className="group cursor-pointer">
