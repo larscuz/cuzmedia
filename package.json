@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "cms:dev": "node server/cmsServer.mjs",
-    "build": "vite build",
+    "cms:export": "node scripts/export-cms.mjs",
+    "build": "npm run cms:export && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

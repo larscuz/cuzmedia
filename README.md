@@ -48,6 +48,20 @@ If needed, you can override the API base from frontend with:
 
 - `VITE_CMS_API_BASE`
 
+## Production note (static hosting)
+
+If your production host serves only static files (for example Vercel without a running Node API),
+`/api/cms` will return `404`.
+
+To keep production updated from admin-edited content:
+
+1. Save changes in local admin (writes `server/data/cms.json`)
+2. Run build (`npm run build`)
+3. Deploy the build output
+
+The build now exports `server/data/cms.json` to `public/cms.json`, and frontend will fallback
+to `/cms.json` when `/api/cms` is unavailable.
+
 ## Cloudflare R2 media setup
 
 Panel media URLs can be absolute URLs (recommended), or use env-based composition:

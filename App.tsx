@@ -49,6 +49,7 @@ type RevisionRecord = {
 
 const ADMIN_TOKEN_STORAGE_KEY = 'cuz-cms-admin-token';
 const CMS_API_BASE = (import.meta.env.VITE_CMS_API_BASE ?? '').trim().replace(/\/+$/, '');
+const CMS_STATIC_SNAPSHOT_PATH = '/cms.json';
 
 const SPIN_BASE_LOCK_MS = 780;
 const WHEEL_THRESHOLD = 90;
@@ -86,6 +87,14 @@ const getApiUrl = (path: string) => {
     return `${CMS_API_BASE}${path}`;
   }
   return path;
+};
+
+const getCmsFetchUrls = () => {
+  const primaryUrl = getApiUrl('/api/cms');
+  if (primaryUrl === CMS_STATIC_SNAPSHOT_PATH) {
+    return [primaryUrl];
+  }
+  return [primaryUrl, CMS_STATIC_SNAPSHOT_PATH];
 };
 
 const getCircularDistance = (index: number, activeIndex: number, total: number) => {
@@ -506,28 +515,37 @@ const SiteApp: React.FC = () => {
     let cancelled = false;
 
     const loadCms = async () => {
-      try {
-        const response = await fetch(getApiUrl('/api/cms'), {
-          cache: 'no-store',
-        });
+      let lastError: string | null = null;
+      const cmsFetchUrls = getCmsFetchUrls();
 
-        if (!response.ok) {
-          throw new Error(await extractErrorMessage(response));
-        }
+      for (const url of cmsFetchUrls) {
+        try {
+          const response = await fetch(url, {
+            cache: 'no-store',
+          });
 
-        const payload = (await response.json()) as unknown;
-        if (!isCmsConfig(payload)) {
-          throw new Error('Invalid CMS payload');
-        }
+          if (!response.ok) {
+            throw new Error(await extractErrorMessage(response));
+          }
 
-        if (!cancelled) {
-          setCmsConfig(payload);
-          setCmsError(null);
+          const payload = (await response.json()) as unknown;
+          if (!isCmsConfig(payload)) {
+            throw new Error('Invalid CMS payload');
+          }
+
+          if (!cancelled) {
+            setCmsConfig(payload);
+            setCmsError(null);
+          }
+          return;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          lastError = `${url} -> ${message}`;
         }
-      } catch (error) {
-        if (!cancelled) {
-          setCmsError(error instanceof Error ? error.message : 'CMS unavailable, using local defaults');
-        }
+      }
+
+      if (!cancelled) {
+        setCmsError(lastError ?? 'CMS unavailable, using local defaults');
       }
     };
 
