@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 const STORAGE_ROOT = path.join('/tmp', 'cuzmedia-cms');
 const ACTIVE_CMS_FILE = path.join(STORAGE_ROOT, 'cms.json');
@@ -10,6 +11,16 @@ const CMS_ADMIN_USER = process.env.CMS_ADMIN_USER ?? 'admin';
 const CMS_ADMIN_PASS = process.env.CMS_ADMIN_PASS ?? 'change-me-now';
 const CMS_TOKEN_SECRET = process.env.CMS_TOKEN_SECRET ?? 'replace-this-secret-in-production';
 const CMS_TOKEN_TTL_SECONDS = Number(process.env.CMS_TOKEN_TTL_SECONDS ?? 60 * 60 * 12);
+
+// Optional: when these are present, CMS state is persisted to R2 (recommended in production).
+const CMS_R2_ACCOUNT_ID = (process.env.R2_ACCOUNT_ID ?? '').trim();
+const CMS_R2_ACCESS_KEY_ID = (process.env.R2_ACCESS_KEY_ID ?? '').trim();
+const CMS_R2_SECRET_ACCESS_KEY = (process.env.R2_SECRET_ACCESS_KEY ?? '').trim();
+const CMS_R2_BUCKET = (process.env.R2_BUCKET ?? '').trim();
+const CMS_R2_KEY = (process.env.CMS_R2_KEY ?? 'CuzMedia/cms.json').trim().replace(/^\/+|\/+$/g, '');
+const CMS_R2_REVISIONS_PREFIX = (process.env.CMS_R2_REVISIONS_PREFIX ?? 'CuzMedia/cms-revisions')
+  .trim()
+  .replace(/^\/+|\/+$/g, '');
 
 const FALLBACK_CMS = {
   settings: {
@@ -56,6 +67,99 @@ const nowIso = () => new Date().toISOString();
 const base64UrlEncode = (input) => Buffer.from(input).toString('base64url');
 const base64UrlDecode = (input) => Buffer.from(input, 'base64url').toString('utf8');
 const signTokenInput = (input) => crypto.createHmac('sha256', CMS_TOKEN_SECRET).update(input).digest('base64url');
+
+const hasR2CmsStorage = () =>
+  Boolean(CMS_R2_ACCOUNT_ID && CMS_R2_ACCESS_KEY_ID && CMS_R2_SECRET_ACCESS_KEY && CMS_R2_BUCKET && CMS_R2_KEY);
+
+const createR2Client = () =>
+  new S3Client({
+    region: 'auto',
+    endpoint: `https://${CMS_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: CMS_R2_ACCESS_KEY_ID,
+      secretAccessKey: CMS_R2_SECRET_ACCESS_KEY,
+    },
+  });
+
+const streamToString = async (body) => {
+  if (!body) {
+    return '';
+  }
+  if (typeof body === 'string') {
+    return body;
+  }
+  if (typeof body.transformToString === 'function') {
+    return body.transformToString();
+  }
+
+  const chunks = [];
+  for await (const chunk of body) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks).toString('utf8');
+};
+
+const isMissingObjectError = (error) => {
+  const name = error?.name ?? '';
+  const statusCode = error?.$metadata?.httpStatusCode ?? 0;
+  return name === 'NoSuchKey' || name === 'NotFound' || statusCode === 404;
+};
+
+const readR2JsonObject = async (key, throwIfMissing = false) => {
+  try {
+    const response = await createR2Client().send(
+      new GetObjectCommand({
+        Bucket: CMS_R2_BUCKET,
+        Key: key,
+      })
+    );
+    const raw = await streamToString(response.Body);
+    return JSON.parse(raw);
+  } catch (error) {
+    if (isMissingObjectError(error) && !throwIfMissing) {
+      return null;
+    }
+    throw error;
+  }
+};
+
+const writeR2JsonObject = async (key, value) => {
+  await createR2Client().send(
+    new PutObjectCommand({
+      Bucket: CMS_R2_BUCKET,
+      Key: key,
+      Body: `${JSON.stringify(value, null, 2)}\n`,
+      ContentType: 'application/json; charset=utf-8',
+      CacheControl: 'no-store',
+    })
+  );
+};
+
+const listR2RevisionObjectKeys = async () => {
+  const prefix = `${CMS_R2_REVISIONS_PREFIX}/`;
+  const keys = [];
+  let continuationToken = undefined;
+
+  do {
+    const response = await createR2Client().send(
+      new ListObjectsV2Command({
+        Bucket: CMS_R2_BUCKET,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      })
+    );
+
+    for (const object of response.Contents ?? []) {
+      if (object.Key?.endsWith('.json')) {
+        keys.push(object.Key);
+      }
+    }
+    continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  keys.sort((a, b) => b.localeCompare(a));
+  return keys;
+};
 
 const validateCta = (value, fieldName) => {
   if (!isObject(value)) {
@@ -193,15 +297,11 @@ const getOrigin = (req) => {
 };
 
 const loadDefaultFromStatic = async (req) => {
-  const candidateFiles = [
-    path.join(process.cwd(), 'public', 'cms.json'),
-    path.join(process.cwd(), 'cms.json'),
-  ];
+  const candidateFiles = [path.join(process.cwd(), 'public', 'cms.json'), path.join(process.cwd(), 'cms.json')];
 
   for (const filePath of candidateFiles) {
     try {
-      const fileValue = validateCmsConfig(await readJsonFile(filePath));
-      return fileValue;
+      return validateCmsConfig(await readJsonFile(filePath));
     } catch {
       // Keep trying other sources.
     }
@@ -220,15 +320,24 @@ const loadDefaultFromStatic = async (req) => {
     if (!response.ok) {
       throw new Error(`Failed to fetch ${sourceUrl}: ${response.status}`);
     }
-
-    const payload = await response.json();
-    return validateCmsConfig(payload);
+    return validateCmsConfig(await response.json());
   } catch {
     return FALLBACK_CMS;
   }
 };
 
 const ensureStorage = async (req) => {
+  if (hasR2CmsStorage()) {
+    const existing = await readR2JsonObject(CMS_R2_KEY);
+    if (existing) {
+      return;
+    }
+
+    const seeded = await loadDefaultFromStatic(req);
+    await writeR2JsonObject(CMS_R2_KEY, validateCmsConfig(seeded));
+    return;
+  }
+
   await fs.mkdir(STORAGE_ROOT, { recursive: true });
   await fs.mkdir(REVISIONS_DIR, { recursive: true });
 
@@ -240,10 +349,24 @@ const ensureStorage = async (req) => {
   }
 };
 
-const createRevision = async () => {
+const createRevision = async (req) => {
+  const revisionId = `${Date.now()}-${crypto.randomUUID()}`;
+
+  if (hasR2CmsStorage()) {
+    const current = await readR2JsonObject(CMS_R2_KEY);
+    if (!current) {
+      return null;
+    }
+
+    const currentValidated = validateCmsConfig(current);
+    const revisionKey = `${CMS_R2_REVISIONS_PREFIX}/${revisionId}.json`;
+    await writeR2JsonObject(revisionKey, currentValidated);
+    return revisionId;
+  }
+
   try {
+    await ensureStorage(req);
     const currentRaw = await fs.readFile(ACTIVE_CMS_FILE, 'utf8');
-    const revisionId = `${Date.now()}-${crypto.randomUUID()}`;
     const revisionPath = path.join(REVISIONS_DIR, `${revisionId}.json`);
     await fs.writeFile(revisionPath, currentRaw, 'utf8');
     return revisionId;
@@ -254,18 +377,43 @@ const createRevision = async () => {
 
 export const readActiveCmsConfig = async (req) => {
   await ensureStorage(req);
+
+  if (hasR2CmsStorage()) {
+    const value = await readR2JsonObject(CMS_R2_KEY, true);
+    return validateCmsConfig(value);
+  }
+
   return validateCmsConfig(await readJsonFile(ACTIVE_CMS_FILE));
 };
 
 export const writeActiveCmsConfig = async (req, config) => {
   await ensureStorage(req);
   const validated = validateCmsConfig(config);
-  await createRevision();
+  await createRevision(req);
+
+  if (hasR2CmsStorage()) {
+    await writeR2JsonObject(CMS_R2_KEY, validated);
+    return validated;
+  }
+
   await writeJsonFile(ACTIVE_CMS_FILE, validated);
   return validated;
 };
 
 export const listRevisions = async () => {
+  if (hasR2CmsStorage()) {
+    const keys = await listR2RevisionObjectKeys();
+    return keys.map((key) => {
+      const fileName = key.split('/').pop() ?? '';
+      const id = fileName.replace(/\.json$/, '');
+      const timestamp = Number(id.split('-')[0]);
+      return {
+        id,
+        createdAt: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null,
+      };
+    });
+  }
+
   await fs.mkdir(REVISIONS_DIR, { recursive: true });
   const entries = await fs.readdir(REVISIONS_DIR, { withFileTypes: true });
   const files = entries
@@ -289,16 +437,30 @@ export const restoreRevision = async (req, revisionId) => {
     throw new Error('Invalid revision id');
   }
 
+  if (hasR2CmsStorage()) {
+    const revisionKey = `${CMS_R2_REVISIONS_PREFIX}/${revisionId}.json`;
+    const revisionConfig = validateCmsConfig(await readR2JsonObject(revisionKey, true));
+    await createRevision(req);
+    await writeR2JsonObject(CMS_R2_KEY, revisionConfig);
+    return revisionConfig;
+  }
+
   const revisionPath = path.join(REVISIONS_DIR, `${revisionId}.json`);
   const revisionConfig = validateCmsConfig(await readJsonFile(revisionPath));
-  await createRevision();
+  await createRevision(req);
   await writeJsonFile(ACTIVE_CMS_FILE, revisionConfig);
   return revisionConfig;
 };
 
 export const restoreDefaultConfig = async (req) => {
   const restored = validateCmsConfig(await loadDefaultFromStatic(req));
-  await createRevision();
+  await createRevision(req);
+
+  if (hasR2CmsStorage()) {
+    await writeR2JsonObject(CMS_R2_KEY, restored);
+    return restored;
+  }
+
   await writeJsonFile(ACTIVE_CMS_FILE, restored);
   return restored;
 };

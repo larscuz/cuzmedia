@@ -77,6 +77,8 @@ Credentials in production are controlled with:
 - `CMS_ADMIN_USER`
 - `CMS_ADMIN_PASS`
 - `CMS_TOKEN_SECRET`
+- Optional persistent key path in R2: `CMS_R2_KEY` (default `CuzMedia/cms.json`)
+- Optional revision prefix in R2: `CMS_R2_REVISIONS_PREFIX` (default `CuzMedia/cms-revisions`)
 
 ## Admin media upload (Cloudflare R2)
 
