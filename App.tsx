@@ -47,6 +47,8 @@ type RevisionRecord = {
   createdAt: string | null;
 };
 
+type UploadKind = 'video' | 'image';
+
 const ADMIN_TOKEN_STORAGE_KEY = 'cuz-cms-admin-token';
 const CMS_API_BASE = (import.meta.env.VITE_CMS_API_BASE ?? '').trim().replace(/\/+$/, '');
 const CMS_STATIC_SNAPSHOT_PATH = '/cms.json';
@@ -862,6 +864,7 @@ const AdminApp: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [revisions, setRevisions] = useState<RevisionRecord[]>([]);
+  const [uploadingFieldKey, setUploadingFieldKey] = useState<string | null>(null);
 
   const loadCms = useCallback(
     async (authToken: string) => {
@@ -1140,6 +1143,96 @@ const AdminApp: React.FC = () => {
         panels: nextPanels,
       };
     });
+  };
+
+  const getUploadFieldKey = (panelId: string, kind: UploadKind) => `${panelId}:${kind}`;
+
+  const uploadPanelMedia = async (panelIndex: number, kind: UploadKind, file: File) => {
+    if (!token || !draftCms) {
+      return;
+    }
+
+    const panel = draftCms.panels[panelIndex];
+    if (!panel) {
+      return;
+    }
+
+    const uploadFieldKey = getUploadFieldKey(panel.id, kind);
+    setUploadingFieldKey(uploadFieldKey);
+    setStatusMessage(`Preparing ${kind} upload...`);
+    setErrorMessage(null);
+
+    try {
+      const signResponse = await fetch(getApiUrl('/api/admin/upload-sign'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          panelId: panel.id,
+          kind,
+          filename: file.name,
+          contentType: file.type,
+          fileSize: file.size,
+        }),
+      });
+
+      if (!signResponse.ok) {
+        throw new Error(await extractErrorMessage(signResponse));
+      }
+
+      const signed = (await signResponse.json()) as {
+        uploadUrl: string;
+        publicUrl: string;
+        objectKey: string;
+        contentType: string;
+      };
+
+      if (!signed.uploadUrl || !signed.publicUrl || !signed.objectKey || !signed.contentType) {
+        throw new Error('Invalid upload signature payload');
+      }
+
+      const uploadResponse = await fetch(signed.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': signed.contentType,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed (${uploadResponse.status})`);
+      }
+
+      if (kind === 'video') {
+        updatePanel(panelIndex, (current) => ({
+          ...current,
+          videoPath: signed.publicUrl,
+        }));
+      } else {
+        updatePanel(panelIndex, (current) => ({
+          ...current,
+          posterPath: signed.publicUrl,
+          fallbackPosterSrc: signed.publicUrl,
+        }));
+      }
+
+      setStatusMessage(`Uploaded ${file.name} to ${signed.objectKey}. Click Save & Publish to persist this media URL.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : `Failed to upload ${kind}`);
+    } finally {
+      setUploadingFieldKey(null);
+    }
+  };
+
+  const handlePanelFileSelect = (panelIndex: number, kind: UploadKind) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+    void uploadPanelMedia(panelIndex, kind, file);
   };
 
   const movePanel = (index: number, direction: -1 | 1) => {
@@ -1627,10 +1720,36 @@ const AdminApp: React.FC = () => {
                     <label className="admin-field">
                       <span>Video Path</span>
                       <input value={panel.videoPath} onChange={(event) => updatePanel(index, (current) => ({ ...current, videoPath: event.target.value }))} />
+                      <div className="admin-upload-row">
+                        <label className="admin-upload-button">
+                          {uploadingFieldKey === getUploadFieldKey(panel.id, 'video') ? 'Uploading Video...' : 'Upload Video'}
+                          <input
+                            className="admin-upload-input"
+                            type="file"
+                            accept="video/*"
+                            onChange={handlePanelFileSelect(index, 'video')}
+                            disabled={isBusy || Boolean(uploadingFieldKey)}
+                          />
+                        </label>
+                        <span className="admin-upload-note">Safe path: CuzMedia/uploads/video/...</span>
+                      </div>
                     </label>
                     <label className="admin-field">
                       <span>Poster Path</span>
                       <input value={panel.posterPath} onChange={(event) => updatePanel(index, (current) => ({ ...current, posterPath: event.target.value }))} />
+                      <div className="admin-upload-row">
+                        <label className="admin-upload-button">
+                          {uploadingFieldKey === getUploadFieldKey(panel.id, 'image') ? 'Uploading Image...' : 'Upload Image'}
+                          <input
+                            className="admin-upload-input"
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePanelFileSelect(index, 'image')}
+                            disabled={isBusy || Boolean(uploadingFieldKey)}
+                          />
+                        </label>
+                        <span className="admin-upload-note">Sets Poster + Fallback Poster automatically.</span>
+                      </div>
                     </label>
                     <label className="admin-field">
                       <span>Fallback Video URL</span>

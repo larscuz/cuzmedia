@@ -78,6 +78,32 @@ Credentials in production are controlled with:
 - `CMS_ADMIN_PASS`
 - `CMS_TOKEN_SECRET`
 
+## Admin media upload (Cloudflare R2)
+
+Admin now includes `Upload Video` and `Upload Image` buttons per panel.
+Uploads are signed server-side and written to unique keys under:
+
+- `CuzMedia/uploads/video/...`
+- `CuzMedia/uploads/image/...`
+
+Set these env vars in Vercel project settings:
+
+- `R2_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET`
+- `R2_PUBLIC_BASE_URL` (for example your `https://pub-...r2.dev`)
+
+Optional:
+
+- `R2_UPLOAD_PREFIX` (default `CuzMedia/uploads`)
+- `R2_SIGNED_URL_TTL_SECONDS` (default `900`)
+- `R2_MAX_VIDEO_BYTES` (default `1073741824`)
+- `R2_MAX_IMAGE_BYTES` (default `62914560`)
+
+R2 bucket CORS must allow browser `PUT` from your site origin (`https://www.cuzmedia.no`) and
+`Content-Type` header.
+
 ## Cloudflare R2 media setup
 
 Panel media URLs can be absolute URLs (recommended), or use env-based composition:
