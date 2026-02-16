@@ -62,6 +62,22 @@ To keep production updated from admin-edited content:
 The build now exports `server/data/cms.json` to `public/cms.json`, and frontend will fallback
 to `/cms.json` when `/api/cms` is unavailable.
 
+## Vercel admin/API routes
+
+This repo now includes serverless API routes under `api/` so `/admin` can authenticate on
+`https://www.cuzmedia.no`.
+
+- Public CMS endpoint: `/api/cms`
+- Admin login: `/api/admin/login`
+- Admin CMS CRUD: `/api/admin/cms`
+- Admin revisions/reset: `/api/admin/revisions`, `/api/admin/reset`, `/api/admin/revisions/:id/restore`
+
+Credentials in production are controlled with:
+
+- `CMS_ADMIN_USER`
+- `CMS_ADMIN_PASS`
+- `CMS_TOKEN_SECRET`
+
 ## Cloudflare R2 media setup
 
 Panel media URLs can be absolute URLs (recommended), or use env-based composition:
