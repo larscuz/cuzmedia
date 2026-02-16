@@ -79,8 +79,8 @@ a {
   border: 0;
   cursor: pointer;
   border-radius: 999px;
-  padding: 0.58rem 0.9rem;
-  min-height: 3rem;
+  padding: 0.44rem 0.68rem;
+  min-height: 2.55rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(18px) saturate(140%);
   color: var(--foreground);
@@ -92,7 +92,7 @@ a {
 }
 
 .brand-logo {
-  width: clamp(7.2rem, 15vw, 10.8rem);
+  width: clamp(6.1rem, 12.5vw, 9.15rem);
   height: auto;
   display: block;
   filter: brightness(0) invert(1);
@@ -950,7 +950,7 @@ a {
 .thumbnail-wheel {
   position: fixed;
   left: 1rem;
-  top: 6.4rem;
+  top: 7.05rem;
   transform: none;
   z-index: 30;
   width: 12.4rem;
