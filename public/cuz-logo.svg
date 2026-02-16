@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1220 420" fill="none">
+  <title>Cuz Media Logo</title>
+  <g stroke="currentColor" stroke-width="42" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M220 40H760L518 218L220 380C120 380 40 304 40 210S120 40 220 40Z" />
+    <path d="M520 380L980 40" />
+    <path d="M340 120V156C340 184 362 206 390 206C418 206 440 184 440 156V120" />
+  </g>
+  <text
+    x="598"
+    y="367"
+    fill="currentColor"
+    font-family="Arial Black, Arial, Helvetica, sans-serif"
+    font-size="172"
+    font-weight="900"
+    letter-spacing="-7"
+  >
+    media
+  </text>
+</svg>

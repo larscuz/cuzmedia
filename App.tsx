@@ -637,9 +637,13 @@ const SiteApp: React.FC = () => {
   return (
     <div className={`site-shell wheel-shell ${isSpinning ? 'is-spinning' : ''}`} data-spin-direction={spinDirection === 1 ? 'next' : 'prev'}>
       <header className="site-header">
-        <button className="brand-lockup" onClick={() => spinToPanel('showreel')} type="button" aria-label="Back to top">
-          {settings.brandName}
-          <span>{settings.brandSubline}</span>
+        <button
+          className="brand-lockup"
+          onClick={() => spinToPanel('showreel')}
+          type="button"
+          aria-label={`Go to ${settings.brandName} home`}
+        >
+          <img className="brand-logo" src="/cuz-logo.svg" alt="" aria-hidden="true" />
         </button>
 
         <nav className="glass-shell desktop-nav" aria-label="Primary">

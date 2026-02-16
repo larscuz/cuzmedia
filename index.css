@@ -73,34 +73,29 @@ a {
 }
 
 .brand-lockup {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
   border: 0;
   cursor: pointer;
   border-radius: 999px;
-  padding: 0.66rem 1rem;
-  min-width: 8.9rem;
+  padding: 0.58rem 0.9rem;
+  min-height: 3rem;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(18px) saturate(140%);
   color: var(--foreground);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
-  font-size: 0.92rem;
-  font-weight: 650;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
 .brand-lockup:hover {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.brand-lockup span {
-  font-size: 0.59rem;
-  letter-spacing: 0.17em;
-  text-transform: uppercase;
-  opacity: 0.72;
+.brand-logo {
+  width: clamp(7.2rem, 15vw, 10.8rem);
+  height: auto;
+  display: block;
+  filter: brightness(0) invert(1);
 }
 
 .glass-shell {
