@@ -643,7 +643,7 @@ const SiteApp: React.FC = () => {
           type="button"
           aria-label={`Go to ${settings.brandName} home`}
         >
-          <img className="brand-logo" src="/cuz-logo.svg" alt="" aria-hidden="true" />
+          <img className="brand-logo" src="/cuz-logo.png" alt="" aria-hidden="true" />
         </button>
 
         <nav className="glass-shell desktop-nav" aria-label="Primary">
