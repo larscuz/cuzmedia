@@ -193,6 +193,20 @@ const getOrigin = (req) => {
 };
 
 const loadDefaultFromStatic = async (req) => {
+  const candidateFiles = [
+    path.join(process.cwd(), 'public', 'cms.json'),
+    path.join(process.cwd(), 'cms.json'),
+  ];
+
+  for (const filePath of candidateFiles) {
+    try {
+      const fileValue = validateCmsConfig(await readJsonFile(filePath));
+      return fileValue;
+    } catch {
+      // Keep trying other sources.
+    }
+  }
+
   const configured = (process.env.CMS_STATIC_SOURCE_URL ?? '').trim();
   const origin = getOrigin(req);
   const sourceUrl = configured || (origin ? `${origin}/cms.json` : '');
