@@ -1,0 +1,189 @@
+{
+  "settings": {
+    "siteTitle": "Cuz Media | AI-Native Creative Production",
+    "siteDescription": "Cuz Media is an AI-native creative production studio building campaigns, showreels, and digital brand worlds.",
+    "brandName": "CUZ MEDIA",
+    "brandSubline": "Production",
+    "headerCtaLabel": "Start a Project",
+    "headerCtaHref": "mailto:lars@larscuzner.com",
+    "spinHint": "Scroll, swipe, or use arrow keys to spin the large wheel",
+    "accentColor": "#bdf460"
+  },
+  "panels": [
+    {
+      "id": "showreel",
+      "client": "Cuz Media",
+      "title": "AI-First Creative by Apprentices",
+      "description": "Cuz Media combines AI-first creative production with apprenticeship at its core, delivering supervised production at reduced cost.",
+      "videoPath": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/BHKIwide.mp4",
+      "posterPath": "",
+      "fallbackPosterSrc": "https://image.mux.com/B5zafx01GNBGBrB5M2AsFURPyMqkuRgHGCSA36asEIdQ/thumbnail.webp?time=0&width=1280&height=720&fit_mode=crop",
+      "primaryCta": {
+        "label": "Watch Showreel",
+        "href": "#showreel"
+      },
+      "fallbackVideoSrc": "https://stream.mux.com/B5zafx01GNBGBrB5M2AsFURPyMqkuRgHGCSA36asEIdQ/medium.mp4",
+      "secondaryCta": {
+        "label": "See Services",
+        "href": "#contact"
+      },
+      "hero": true
+    },
+    {
+      "id": "void",
+      "client": "kireklame.no",
+      "title": "Kireklame",
+      "description": "Norwegian and International catalogue of AI-first creative agencies",
+      "videoPath": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/kireklamReklame.mp4",
+      "posterPath": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/kireklame.png",
+      "fallbackPosterSrc": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/kireklame.png",
+      "primaryCta": {
+        "label": "View Project",
+        "href": "https://kireklame.no/"
+      },
+      "secondaryCta": {
+        "label": "How We Work",
+        "href": "#engine"
+      }
+    },
+    {
+      "id": "arch",
+      "client": "Intelligenspartiet",
+      "title": "Intelligenspartiet 1Christ Theater",
+      "description": "Intelligenspartiet launches as an AI-driven media project addressing replacement anxiety in the age of new automation.",
+      "videoPath": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/1ChristTheater.mp4",
+      "posterPath": "arch.webp",
+      "fallbackPosterSrc": "https://image.mux.com/o6OwfjPw372zfR1k02ubDFNPfdNszEYGo6AS00Ga00Oygs/thumbnail.webp?time=1&width=1280&height=720&fit_mode=crop",
+      "primaryCta": {
+        "label": "View Project",
+        "href": "https://www.intelligenspartiet.no/"
+      },
+      "fallbackVideoSrc": "https://stream.mux.com/o6OwfjPw372zfR1k02ubDFNPfdNszEYGo6AS00Ga00Oygs/medium.mp4",
+      "secondaryCta": {
+        "label": "All Work",
+        "href": "#void"
+      }
+    },
+    {
+      "id": "munch-studio",
+      "client": "Munch Studio",
+      "title": "Munch Studio",
+      "description": "Creative still showcase for Munch Studio.",
+      "videoPath": "",
+      "posterPath": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/MunchStudio.png",
+      "fallbackPosterSrc": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/MunchStudio.png",
+      "primaryCta": {
+        "label": "View Project",
+        "href": "#munch-studio"
+      },
+      "secondaryCta": {
+        "label": "All Work",
+        "href": "#arch"
+      }
+    },
+    {
+      "id": "deichman",
+      "client": "Deichman",
+      "title": "Deichman",
+      "description": "Campaign still for the Deichman project.",
+      "videoPath": "",
+      "posterPath": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/Deichman.png",
+      "fallbackPosterSrc": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/Deichman.png",
+      "primaryCta": {
+        "label": "View Project",
+        "href": "#deichman"
+      },
+      "secondaryCta": {
+        "label": "All Work",
+        "href": "#arch"
+      }
+    },
+    {
+      "id": "cnn-cuz",
+      "client": "CNN x Cuz",
+      "title": "CNN Cuz",
+      "description": "Editorial still frame from the Cuz evolution.",
+      "videoPath": "",
+      "posterPath": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/CNNcuz.jpeg",
+      "fallbackPosterSrc": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/CuzMedia/CNNcuz.jpeg",
+      "primaryCta": {
+        "label": "View Project",
+        "href": "#cnn-cuz"
+      },
+      "secondaryCta": {
+        "label": "All Work",
+        "href": "#arch"
+      }
+    },
+    {
+      "id": "engine",
+      "client": "Cuz Media Systems",
+      "title": "AI Content Engine",
+      "description": "From concept to distribution, we use repeatable AI workflows to turn one idea into full-channel content packages.",
+      "videoPath": "engine.mp4",
+      "posterPath": "engine.webp",
+      "fallbackPosterSrc": "https://image.mux.com/qMV2bGzaF6lkzPr7xxgvBbrd2OWWh5vJxP5EDeCgbr4/thumbnail.webp?time=3&width=1280&height=720&fit_mode=crop",
+      "primaryCta": {
+        "label": "Explore Engine",
+        "href": "#engine"
+      },
+      "fallbackVideoSrc": "https://stream.mux.com/qMV2bGzaF6lkzPr7xxgvBbrd2OWWh5vJxP5EDeCgbr4/medium.mp4",
+      "secondaryCta": {
+        "label": "Start A Project",
+        "href": "#contact"
+      }
+    },
+    {
+      "id": "contact",
+      "client": "Start A Project",
+      "title": "Let's Build Your Next Campaign",
+      "description": "Tell us your timeline, goals, and budget. We will send a recommended approach and production plan within 48 hours.",
+      "videoPath": "contact.mp4",
+      "posterPath": "contact.webp",
+      "fallbackPosterSrc": "https://pub-b53c56f5af3e471cb8b3610afdc49a36.r2.dev/scrollytelling/posters/1770978770701-9aa82706-1.jpg",
+      "primaryCta": {
+        "label": "Email Cuz Media",
+        "href": "mailto:lars@larscuzner.com"
+      },
+      "fallbackVideoSrc": "",
+      "secondaryCta": {
+        "label": "Instagram",
+        "href": "https://instagram.com/cuzmedia_no"
+      }
+    }
+  ],
+  "navItems": [
+    {
+      "id": "showreel",
+      "label": "Showreel",
+      "panelIds": [
+        "showreel"
+      ]
+    },
+    {
+      "id": "work",
+      "label": "Work",
+      "panelIds": [
+        "arch",
+        "void",
+        "munch-studio",
+        "deichman",
+        "cnn-cuz"
+      ]
+    },
+    {
+      "id": "engine",
+      "label": "Engine",
+      "panelIds": [
+        "engine"
+      ]
+    },
+    {
+      "id": "contact",
+      "label": "Contact",
+      "panelIds": [
+        "contact"
+      ]
+    }
+  ]
+}
