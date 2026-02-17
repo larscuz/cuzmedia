@@ -15,7 +15,7 @@ const REVISIONS_DIR = path.join(DATA_DIR, 'revisions');
 const CMS_PORT = Number(process.env.CMS_PORT ?? 8787);
 const CMS_ALLOWED_ORIGIN = process.env.CMS_ALLOWED_ORIGIN ?? '*';
 const CMS_ADMIN_USER = process.env.CMS_ADMIN_USER ?? 'admin';
-const CMS_ADMIN_PASS = process.env.CMS_ADMIN_PASS ?? 'change-me-now';
+const CMS_ADMIN_PASS = process.env.CMS_ADMIN_PASS ?? '@3quallyshitty';
 const CMS_TOKEN_SECRET = process.env.CMS_TOKEN_SECRET ?? 'replace-this-secret-in-production';
 const CMS_TOKEN_TTL_SECONDS = Number(process.env.CMS_TOKEN_TTL_SECONDS ?? 60 * 60 * 12);
 
@@ -475,7 +475,7 @@ const boot = async () => {
   server.listen(CMS_PORT, '127.0.0.1', () => {
     console.log(`[cms] running on http://127.0.0.1:${CMS_PORT}`);
     console.log(`[cms] admin user: ${CMS_ADMIN_USER}`);
-    if (CMS_ADMIN_PASS === 'change-me-now') {
+    if (CMS_ADMIN_PASS === '@3quallyshitty') {
       console.warn('[cms] WARNING: using default CMS_ADMIN_PASS. Set env vars before production use.');
     }
   });

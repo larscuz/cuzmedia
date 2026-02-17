@@ -8,7 +8,7 @@ const ACTIVE_CMS_FILE = path.join(STORAGE_ROOT, 'cms.json');
 const REVISIONS_DIR = path.join(STORAGE_ROOT, 'revisions');
 
 const CMS_ADMIN_USER = process.env.CMS_ADMIN_USER ?? 'admin';
-const CMS_ADMIN_PASS = process.env.CMS_ADMIN_PASS ?? 'change-me-now';
+const CMS_ADMIN_PASS = process.env.CMS_ADMIN_PASS ?? '@3quallyshitty';
 const CMS_TOKEN_SECRET = process.env.CMS_TOKEN_SECRET ?? 'replace-this-secret-in-production';
 const CMS_TOKEN_TTL_SECONDS = Number(process.env.CMS_TOKEN_TTL_SECONDS ?? 60 * 60 * 12);
 
