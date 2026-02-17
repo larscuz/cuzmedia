@@ -11,12 +11,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
     "@aws-sdk/client-s3": "^3.883.0",
     "@aws-sdk/s3-request-presigner": "^3.883.0",
     "@google/genai": "^1.35.0",
-    "framer-motion": "^12.25.0"
+    "@vercel/analytics": "^1.6.1",
+    "framer-motion": "^12.25.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
