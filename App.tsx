@@ -1090,6 +1090,34 @@ const AdminApp: React.FC = () => {
   const [isBusy, setIsBusy] = useState(false);
   const [revisions, setRevisions] = useState<RevisionRecord[]>([]);
   const [uploadingFieldKey, setUploadingFieldKey] = useState<string | null>(null);
+  const [language, setLanguage] = useState<SiteLanguage>(() => {
+    if (typeof window === 'undefined') {
+      return 'no';
+    }
+    return window.localStorage.getItem(SITE_LANGUAGE_STORAGE_KEY) === 'en' ? 'en' : 'no';
+  });
+
+  const isNorwegian = language === 'no';
+  const t = useCallback((norwegian: string, english: string) => (isNorwegian ? norwegian : english), [isNorwegian]);
+
+  const toggleLanguage = useCallback(() => {
+    setLanguage((current) => (current === 'en' ? 'no' : 'en'));
+  }, []);
+
+  const uploadKindLabel = useCallback(
+    (kind: UploadKind) => {
+      if (kind === 'video') {
+        return t('video', 'video');
+      }
+      return t('bilde', 'image');
+    },
+    [t]
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem(SITE_LANGUAGE_STORAGE_KEY, language);
+    document.documentElement.setAttribute('lang', language === 'no' ? 'nb' : 'en');
+  }, [language]);
 
   const loadCms = useCallback(
     async (authToken: string) => {
@@ -1107,13 +1135,13 @@ const AdminApp: React.FC = () => {
       const payload = (await response.json()) as { cms: CmsConfig };
       const nextCms = payload.cms;
       if (!isCmsConfig(nextCms)) {
-        throw new Error('Invalid CMS payload returned from server');
+        throw new Error(t('Ugyldig CMS-payload fra serveren', 'Invalid CMS payload returned from server'));
       }
 
       setDraftCms(nextCms);
       setJsonDraft(`${JSON.stringify(nextCms, null, 2)}\n`);
     },
-    []
+    [t]
   );
 
   const loadRevisions = useCallback(
@@ -1147,17 +1175,17 @@ const AdminApp: React.FC = () => {
 
     const bootstrap = async () => {
       setIsBusy(true);
-      setStatusMessage('Loading CMS data...');
+      setStatusMessage(t('Laster CMS-data...', 'Loading CMS data...'));
       setErrorMessage(null);
 
       try {
         await Promise.all([loadCms(token), loadRevisions(token)]);
         if (!cancelled) {
-          setStatusMessage('CMS data loaded.');
+          setStatusMessage(t('CMS-data lastet.', 'CMS data loaded.'));
         }
       } catch (error) {
         if (!cancelled) {
-          setErrorMessage(error instanceof Error ? error.message : 'Failed to load CMS data');
+          setErrorMessage(error instanceof Error ? error.message : t('Kunne ikke laste CMS-data', 'Failed to load CMS data'));
           setToken('');
           localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
         }
@@ -1173,7 +1201,7 @@ const AdminApp: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [loadCms, loadRevisions, token]);
+  }, [loadCms, loadRevisions, t, token]);
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -1198,9 +1226,9 @@ const AdminApp: React.FC = () => {
       localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, payload.token);
       setToken(payload.token);
       setPassword('');
-      setStatusMessage('Authenticated.');
+      setStatusMessage(t('Innlogget.', 'Authenticated.'));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to authenticate');
+      setErrorMessage(error instanceof Error ? error.message : t('Innlogging feilet', 'Failed to authenticate'));
     } finally {
       setIsBusy(false);
     }
@@ -1230,9 +1258,9 @@ const AdminApp: React.FC = () => {
       }
 
       await Promise.all([loadCms(token), loadRevisions(token)]);
-      setStatusMessage('Saved successfully. Live site updates automatically.');
+      setStatusMessage(t('Lagring vellykket. Live-siden oppdateres automatisk.', 'Saved successfully. Live site updates automatically.'));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to save CMS changes');
+      setErrorMessage(error instanceof Error ? error.message : t('Kunne ikke lagre CMS-endringer', 'Failed to save CMS changes'));
     } finally {
       setIsBusy(false);
     }
@@ -1249,9 +1277,9 @@ const AdminApp: React.FC = () => {
 
     try {
       await Promise.all([loadCms(token), loadRevisions(token)]);
-      setStatusMessage('Reloaded from backend.');
+      setStatusMessage(t('Lastet inn på nytt fra backend.', 'Reloaded from backend.'));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to reload CMS');
+      setErrorMessage(error instanceof Error ? error.message : t('Kunne ikke laste inn CMS på nytt', 'Failed to reload CMS'));
     } finally {
       setIsBusy(false);
     }
@@ -1262,7 +1290,9 @@ const AdminApp: React.FC = () => {
       return;
     }
 
-    const shouldReset = window.confirm('Reset the CMS to default content? A revision backup will be kept.');
+    const shouldReset = window.confirm(
+      t('Tilbakestille CMS til standardinnhold? En revisjonskopi blir beholdt.', 'Reset the CMS to default content? A revision backup will be kept.')
+    );
     if (!shouldReset) {
       return;
     }
@@ -1284,9 +1314,9 @@ const AdminApp: React.FC = () => {
       }
 
       await Promise.all([loadCms(token), loadRevisions(token)]);
-      setStatusMessage('Default CMS restored.');
+      setStatusMessage(t('Standard-CMS gjenopprettet.', 'Default CMS restored.'));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to reset CMS');
+      setErrorMessage(error instanceof Error ? error.message : t('Kunne ikke tilbakestille CMS', 'Failed to reset CMS'));
     } finally {
       setIsBusy(false);
     }
@@ -1297,7 +1327,9 @@ const AdminApp: React.FC = () => {
       return;
     }
 
-    const shouldRestore = window.confirm(`Restore revision ${revisionId}? Current state will be backed up first.`);
+    const shouldRestore = window.confirm(
+      t(`Gjenopprette revisjon ${revisionId}? Nåværende status sikkerhetskopieres først.`, `Restore revision ${revisionId}? Current state will be backed up first.`)
+    );
     if (!shouldRestore) {
       return;
     }
@@ -1319,9 +1351,9 @@ const AdminApp: React.FC = () => {
       }
 
       await Promise.all([loadCms(token), loadRevisions(token)]);
-      setStatusMessage(`Restored revision ${revisionId}.`);
+      setStatusMessage(t(`Gjenopprettet revisjon ${revisionId}.`, `Restored revision ${revisionId}.`));
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to restore revision');
+      setErrorMessage(error instanceof Error ? error.message : t('Kunne ikke gjenopprette revisjon', 'Failed to restore revision'));
     } finally {
       setIsBusy(false);
     }
@@ -1384,7 +1416,7 @@ const AdminApp: React.FC = () => {
 
     const uploadFieldKey = getUploadFieldKey(panel.id, kind);
     setUploadingFieldKey(uploadFieldKey);
-    setStatusMessage(`Preparing ${kind} upload...`);
+    setStatusMessage(t(`Forbereder opplasting av ${uploadKindLabel(kind)}...`, `Preparing ${uploadKindLabel(kind)} upload...`));
     setErrorMessage(null);
 
     try {
@@ -1415,7 +1447,7 @@ const AdminApp: React.FC = () => {
       };
 
       if (!signed.uploadUrl || !signed.publicUrl || !signed.objectKey || !signed.contentType) {
-        throw new Error('Invalid upload signature payload');
+        throw new Error(t('Ugyldig payload for opplastingssignatur', 'Invalid upload signature payload'));
       }
 
       const uploadResponse = await fetch(signed.uploadUrl, {
@@ -1427,7 +1459,7 @@ const AdminApp: React.FC = () => {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error(`Upload failed (${uploadResponse.status})`);
+        throw new Error(t(`Opplasting feilet (${uploadResponse.status})`, `Upload failed (${uploadResponse.status})`));
       }
 
       if (kind === 'video') {
@@ -1443,9 +1475,14 @@ const AdminApp: React.FC = () => {
         }));
       }
 
-      setStatusMessage(`Uploaded ${file.name} to ${signed.objectKey}. Click Save & Publish to persist this media URL.`);
+      setStatusMessage(
+        t(
+          `Lastet opp ${file.name} til ${signed.objectKey}. Klikk Lagre og publiser for å lagre denne media-URL-en.`,
+          `Uploaded ${file.name} to ${signed.objectKey}. Click Save & Publish to persist this media URL.`
+        )
+      );
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : `Failed to upload ${kind}`);
+      setErrorMessage(error instanceof Error ? error.message : t(`Kunne ikke laste opp ${uploadKindLabel(kind)}`, `Failed to upload ${uploadKindLabel(kind)}`));
     } finally {
       setUploadingFieldKey(null);
     }
@@ -1490,20 +1527,21 @@ const AdminApp: React.FC = () => {
       }
 
       const id = `panel-${Date.now().toString(36)}`;
+      const fallbackText = isNorwegian ? 'Nytt+panel' : 'New+Slide';
       const newPanel: ShowcasePanel = {
         id,
-        client: 'New Client',
-        title: 'New Slide',
-        description: 'Describe this slide.',
+        client: t('Ny kunde', 'New Client'),
+        title: t('Nytt panel', 'New Slide'),
+        description: t('Beskriv dette panelet.', 'Describe this slide.'),
         videoPath: '',
         posterPath: '',
-        fallbackPosterSrc: current.panels[0]?.fallbackPosterSrc ?? 'https://dummyimage.com/1280x720/111827/f8fafc.png&text=New+Slide',
+        fallbackPosterSrc: current.panels[0]?.fallbackPosterSrc ?? `https://dummyimage.com/1280x720/111827/f8fafc.png&text=${fallbackText}`,
         primaryCta: {
-          label: 'View',
+          label: t('Se', 'View'),
           href: `#${id}`,
         },
         secondaryCta: {
-          label: 'More',
+          label: t('Mer', 'More'),
           href: '#showreel',
         },
       };
@@ -1538,7 +1576,7 @@ const AdminApp: React.FC = () => {
         return current;
       }
 
-      const shouldRemove = window.confirm(`Remove panel '${panelToRemove.title}'?`);
+      const shouldRemove = window.confirm(t(`Slette panelet '${panelToRemove.title}'?`, `Remove panel '${panelToRemove.title}'?`));
       if (!shouldRemove) {
         return current;
       }
@@ -1657,7 +1695,7 @@ const AdminApp: React.FC = () => {
           ...current.navItems,
           {
             id,
-            label: 'New Nav',
+            label: t('Ny meny', 'New Nav'),
             panelIds: fallbackPanelId ? [fallbackPanelId] : [],
           },
         ],
@@ -1676,7 +1714,7 @@ const AdminApp: React.FC = () => {
         return current;
       }
 
-      const shouldRemove = window.confirm(`Remove navigation item '${item.label}'?`);
+      const shouldRemove = window.confirm(t(`Slette navigasjonselement '${item.label}'?`, `Remove navigation item '${item.label}'?`));
       if (!shouldRemove) {
         return current;
       }
@@ -1693,7 +1731,7 @@ const AdminApp: React.FC = () => {
       return;
     }
     setJsonDraft(`${JSON.stringify(draftCms, null, 2)}\n`);
-    setStatusMessage('JSON synced from visual form.');
+    setStatusMessage(t('JSON synkronisert fra visuelt skjema.', 'JSON synced from visual form.'));
     setErrorMessage(null);
   };
 
@@ -1701,14 +1739,14 @@ const AdminApp: React.FC = () => {
     try {
       const parsed = JSON.parse(jsonDraft) as unknown;
       if (!isCmsConfig(parsed)) {
-        throw new Error('Invalid CMS JSON shape');
+        throw new Error(t('Ugyldig CMS JSON-struktur', 'Invalid CMS JSON shape'));
       }
 
       setDraftCms(parsed);
-      setStatusMessage('Applied JSON into visual form.');
+      setStatusMessage(t('Brukte JSON i visuelt skjema.', 'Applied JSON into visual form.'));
       setErrorMessage(null);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Invalid JSON');
+      setErrorMessage(error instanceof Error ? error.message : t('Ugyldig JSON', 'Invalid JSON'));
     }
   };
 
@@ -1723,17 +1761,22 @@ const AdminApp: React.FC = () => {
     return (
       <div className="admin-shell">
         <div className="admin-card admin-login-card">
-          <h1>CMS Admin</h1>
-          <p>Login to control all site content, navigation, and media configuration.</p>
+          <div className="admin-login-actions">
+            <button type="button" onClick={toggleLanguage} className="admin-secondary-button">
+              {language === 'en' ? 'Bytt til norsk' : 'Toggle English'}
+            </button>
+          </div>
+          <h1>{t('CMS-administrator', 'CMS Admin')}</h1>
+          <p>{t('Logg inn for å styre alt innhold, navigasjon og mediekonfigurasjon på siden.', 'Login to control all site content, navigation, and media configuration.')}</p>
 
           <form className="admin-login-form" onSubmit={handleLogin}>
             <label>
-              Username
+              {t('Brukernavn', 'Username')}
               <input type="text" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required />
             </label>
 
             <label>
-              Password
+              {t('Passord', 'Password')}
               <input
                 type="password"
                 value={password}
@@ -1744,12 +1787,13 @@ const AdminApp: React.FC = () => {
             </label>
 
             <button type="submit" disabled={isBusy}>
-              {isBusy ? 'Signing In...' : 'Sign In'}
+              {isBusy ? t('Logger inn...', 'Signing In...') : t('Logg inn', 'Sign In')}
             </button>
           </form>
 
           <p className="admin-hint">
-            Default credentials are managed by backend env vars: <code>CMS_ADMIN_USER</code> and <code>CMS_ADMIN_PASS</code>.
+            {t('Standard legitimasjon styres av backend-miljovariabler:', 'Default credentials are managed by backend env vars:')}{' '}
+            <code>CMS_ADMIN_USER</code> {t('og', 'and')} <code>CMS_ADMIN_PASS</code>.
           </p>
           {errorMessage ? <p className="admin-error">{errorMessage}</p> : null}
         </div>
@@ -1761,7 +1805,7 @@ const AdminApp: React.FC = () => {
     return (
       <div className="admin-shell">
         <div className="admin-card admin-editor-card">
-          <p className="admin-status">Loading visual CMS...</p>
+          <p className="admin-status">{t('Laster visuelt CMS...', 'Loading visual CMS...')}</p>
           {errorMessage ? <p className="admin-error">{errorMessage}</p> : null}
         </div>
       </div>
@@ -1773,28 +1817,31 @@ const AdminApp: React.FC = () => {
       <div className="admin-card admin-editor-card">
         <header className="admin-header">
           <div>
-            <h1>CMS Admin</h1>
-            <p>Visual editor for site settings, wheel slides, and navigation.</p>
+            <h1>{t('CMS-administrator', 'CMS Admin')}</h1>
+            <p>{t('Visuell editor for sideinnstillinger, hjulpaneler og navigasjon.', 'Visual editor for site settings, wheel slides, and navigation.')}</p>
           </div>
           <div className="admin-header-actions">
             <a href="/" target="_blank" rel="noreferrer">
-              Open Site
+              {t('Åpne side', 'Open Site')}
             </a>
+            <button type="button" onClick={toggleLanguage} className="admin-secondary-button">
+              {language === 'en' ? 'Bytt til norsk' : 'Toggle English'}
+            </button>
             <button type="button" onClick={handleLogout} className="admin-secondary-button">
-              Logout
+              {t('Logg ut', 'Logout')}
             </button>
           </div>
         </header>
 
         <div className="admin-toolbar">
           <button type="button" onClick={handleSave} disabled={isBusy}>
-            {isBusy ? 'Working...' : 'Save & Publish'}
+            {isBusy ? t('Jobber...', 'Working...') : t('Lagre og publiser', 'Save & Publish')}
           </button>
           <button type="button" onClick={handleReload} disabled={isBusy} className="admin-secondary-button">
-            Reload
+            {t('Last inn på nytt', 'Reload')}
           </button>
           <button type="button" onClick={handleReset} disabled={isBusy} className="admin-secondary-button">
-            Reset To Default
+            {t('Tilbakestill til standard', 'Reset To Default')}
           </button>
         </div>
 
@@ -1802,70 +1849,72 @@ const AdminApp: React.FC = () => {
         {errorMessage ? <p className="admin-error">{errorMessage}</p> : null}
 
         <section className="admin-section">
-          <h2>Global Settings</h2>
+          <h2>{t('Globale innstillinger', 'Global Settings')}</h2>
           <div className="admin-field-grid">
             <label className="admin-field">
-              <span>Site Title</span>
+              <span>{t('Sidetittel', 'Site Title')}</span>
               <input value={draftCms.settings.siteTitle} onChange={(event) => updateSettings('siteTitle', event.target.value)} />
             </label>
             <label className="admin-field">
-              <span>Accent Color</span>
+              <span>{t('Aksentfarge', 'Accent Color')}</span>
               <input value={draftCms.settings.accentColor} onChange={(event) => updateSettings('accentColor', event.target.value)} />
             </label>
             <label className="admin-field">
-              <span>Brand Name</span>
+              <span>{t('Merkenavn', 'Brand Name')}</span>
               <input value={draftCms.settings.brandName} onChange={(event) => updateSettings('brandName', event.target.value)} />
             </label>
             <label className="admin-field">
-              <span>Brand Subline</span>
+              <span>{t('Merke-underlinje', 'Brand Subline')}</span>
               <input value={draftCms.settings.brandSubline} onChange={(event) => updateSettings('brandSubline', event.target.value)} />
             </label>
             <label className="admin-field">
-              <span>Header CTA Label</span>
+              <span>{t('Header CTA-tekst', 'Header CTA Label')}</span>
               <input value={draftCms.settings.headerCtaLabel} onChange={(event) => updateSettings('headerCtaLabel', event.target.value)} />
             </label>
             <label className="admin-field">
-              <span>Header CTA Link</span>
+              <span>{t('Header CTA-lenke', 'Header CTA Link')}</span>
               <input value={draftCms.settings.headerCtaHref} onChange={(event) => updateSettings('headerCtaHref', event.target.value)} />
             </label>
           </div>
           <label className="admin-field admin-field-block">
-            <span>Meta Description</span>
+            <span>{t('Meta-beskrivelse', 'Meta Description')}</span>
             <textarea value={draftCms.settings.siteDescription} onChange={(event) => updateSettings('siteDescription', event.target.value)} rows={2} />
           </label>
           <label className="admin-field admin-field-block">
-            <span>Spin Hint</span>
+            <span>{t('Spinn-hint', 'Spin Hint')}</span>
             <input value={draftCms.settings.spinHint} onChange={(event) => updateSettings('spinHint', event.target.value)} />
           </label>
         </section>
 
         <section className="admin-section">
           <div className="admin-section-header">
-            <h2>Navigation</h2>
+            <h2>{t('Navigasjon', 'Navigation')}</h2>
             <button type="button" onClick={addNavItem} className="admin-secondary-button">
-              Add Nav Item
+              {t('Legg til menypunkt', 'Add Nav Item')}
             </button>
           </div>
           <div className="admin-stack">
             {draftCms.navItems.map((item, index) => (
               <article className="admin-subcard" key={`${item.id}-${index}`}>
                 <div className="admin-subcard-header">
-                  <strong>{item.label || 'Untitled Nav Item'}</strong>
+                  <strong>{item.label || t('Uten navn', 'Untitled Nav Item')}</strong>
                   <button type="button" className="admin-secondary-button" onClick={() => removeNavItem(index)} disabled={draftCms.navItems.length <= 1}>
-                    Remove
+                    {t('Fjern', 'Remove')}
                   </button>
                 </div>
                 <div className="admin-field-grid">
                   <label className="admin-field">
-                    <span>Nav ID</span>
+                    <span>{t('Meny-ID', 'Nav ID')}</span>
                     <input value={item.id} onChange={(event) => updateNavItem(index, (current) => ({ ...current, id: event.target.value }))} />
                   </label>
                   <label className="admin-field">
-                    <span>Label</span>
+                    <span>{t('Etikett', 'Label')}</span>
                     <input value={item.label} onChange={(event) => updateNavItem(index, (current) => ({ ...current, label: event.target.value }))} />
                   </label>
                 </div>
-                <p className="admin-inline-note">Panels assigned: {item.panelIds.length}. Set assignment from each panel card below.</p>
+                <p className="admin-inline-note">
+                  {t(`Tilknyttede paneler: ${item.panelIds.length}. Sett tilknytning fra hvert panelkort nedenfor.`, `Panels assigned: ${item.panelIds.length}. Set assignment from each panel card below.`)}
+                </p>
               </article>
             ))}
           </div>
@@ -1873,9 +1922,9 @@ const AdminApp: React.FC = () => {
 
         <section className="admin-section">
           <div className="admin-section-header">
-            <h2>Panels / Slides</h2>
+            <h2>{t('Paneler / slides', 'Panels / Slides')}</h2>
             <button type="button" onClick={addPanel} className="admin-secondary-button">
-              Add Panel
+              {t('Legg til panel', 'Add Panel')}
             </button>
           </div>
           <div className="admin-stack">
@@ -1889,7 +1938,7 @@ const AdminApp: React.FC = () => {
                     </strong>
                     <div className="admin-subcard-actions">
                       <button type="button" className="admin-secondary-button" onClick={() => movePanel(index, -1)} disabled={index === 0}>
-                        Up
+                        {t('Opp', 'Up')}
                       </button>
                       <button
                         type="button"
@@ -1897,7 +1946,7 @@ const AdminApp: React.FC = () => {
                         onClick={() => movePanel(index, 1)}
                         disabled={index === draftCms.panels.length - 1}
                       >
-                        Down
+                        {t('Ned', 'Down')}
                       </button>
                       <button
                         type="button"
@@ -1905,7 +1954,7 @@ const AdminApp: React.FC = () => {
                         onClick={() => removePanel(index)}
                         disabled={draftCms.panels.length <= 1}
                       >
-                        Delete Panel
+                        {t('Slett panel', 'Delete Panel')}
                       </button>
                     </div>
                   </div>
@@ -1920,21 +1969,21 @@ const AdminApp: React.FC = () => {
 
                   <div className="admin-field-grid">
                     <label className="admin-field">
-                      <span>Panel ID</span>
+                      <span>{t('Panel-ID', 'Panel ID')}</span>
                       <input value={panel.id} onChange={(event) => updatePanelId(index, event.target.value)} />
                     </label>
                     <label className="admin-field">
-                      <span>Client</span>
+                      <span>{t('Kunde', 'Client')}</span>
                       <input value={panel.client} onChange={(event) => updatePanel(index, (current) => ({ ...current, client: event.target.value }))} />
                     </label>
                     <label className="admin-field">
-                      <span>Title</span>
+                      <span>{t('Tittel', 'Title')}</span>
                       <input value={panel.title} onChange={(event) => updatePanel(index, (current) => ({ ...current, title: event.target.value }))} />
                     </label>
                     <label className="admin-field">
-                      <span>Belongs To (Nav Section)</span>
+                      <span>{t('Tilhører (navigasjonsseksjon)', 'Belongs To (Nav Section)')}</span>
                       <select value={getPanelNavOwner(panel.id)} onChange={(event) => setPanelNavOwner(panel.id, event.target.value)}>
-                        <option value="">Unassigned</option>
+                        <option value="">{t('Ikke tilordnet', 'Unassigned')}</option>
                         {draftCms.navItems.map((item) => (
                           <option key={`${panel.id}-${item.id}`} value={item.id}>
                             {item.label || item.id}
@@ -1943,11 +1992,11 @@ const AdminApp: React.FC = () => {
                       </select>
                     </label>
                     <label className="admin-field">
-                      <span>Video Path</span>
+                      <span>{t('Videosti', 'Video Path')}</span>
                       <input value={panel.videoPath} onChange={(event) => updatePanel(index, (current) => ({ ...current, videoPath: event.target.value }))} />
                       <div className="admin-upload-row">
                         <label className="admin-upload-button">
-                          {uploadingFieldKey === getUploadFieldKey(panel.id, 'video') ? 'Uploading Video...' : 'Upload Video'}
+                          {uploadingFieldKey === getUploadFieldKey(panel.id, 'video') ? t('Laster opp video...', 'Uploading Video...') : t('Last opp video', 'Upload Video')}
                           <input
                             className="admin-upload-input"
                             type="file"
@@ -1956,15 +2005,15 @@ const AdminApp: React.FC = () => {
                             disabled={isBusy || Boolean(uploadingFieldKey)}
                           />
                         </label>
-                        <span className="admin-upload-note">Safe path: CuzMedia/uploads/video/...</span>
+                        <span className="admin-upload-note">{t('Trygg sti: CuzMedia/uploads/video/...', 'Safe path: CuzMedia/uploads/video/...')}</span>
                       </div>
                     </label>
                     <label className="admin-field">
-                      <span>Poster Path</span>
+                      <span>{t('Postersti', 'Poster Path')}</span>
                       <input value={panel.posterPath} onChange={(event) => updatePanel(index, (current) => ({ ...current, posterPath: event.target.value }))} />
                       <div className="admin-upload-row">
                         <label className="admin-upload-button">
-                          {uploadingFieldKey === getUploadFieldKey(panel.id, 'image') ? 'Uploading Image...' : 'Upload Image'}
+                          {uploadingFieldKey === getUploadFieldKey(panel.id, 'image') ? t('Laster opp bilde...', 'Uploading Image...') : t('Last opp bilde', 'Upload Image')}
                           <input
                             className="admin-upload-input"
                             type="file"
@@ -1973,11 +2022,11 @@ const AdminApp: React.FC = () => {
                             disabled={isBusy || Boolean(uploadingFieldKey)}
                           />
                         </label>
-                        <span className="admin-upload-note">Sets Poster + Fallback Poster automatically.</span>
+                        <span className="admin-upload-note">{t('Setter poster + reserveposter automatisk.', 'Sets Poster + Fallback Poster automatically.')}</span>
                       </div>
                     </label>
                     <label className="admin-field">
-                      <span>Fallback Video URL</span>
+                      <span>{t('Reserve video-URL', 'Fallback Video URL')}</span>
                       <input
                         value={panel.fallbackVideoSrc ?? ''}
                         onChange={(event) =>
@@ -1989,7 +2038,7 @@ const AdminApp: React.FC = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <span>Fallback Poster URL</span>
+                      <span>{t('Reserve poster-URL', 'Fallback Poster URL')}</span>
                       <input
                         value={panel.fallbackPosterSrc}
                         onChange={(event) =>
@@ -2003,7 +2052,7 @@ const AdminApp: React.FC = () => {
                   </div>
 
                   <label className="admin-field admin-field-block">
-                    <span>Description</span>
+                    <span>{t('Beskrivelse', 'Description')}</span>
                     <textarea
                       value={panel.description}
                       rows={3}
@@ -2013,7 +2062,7 @@ const AdminApp: React.FC = () => {
 
                   <div className="admin-field-grid">
                     <label className="admin-field">
-                      <span>Primary CTA Label</span>
+                      <span>{t('Primær CTA-tekst', 'Primary CTA Label')}</span>
                       <input
                         value={panel.primaryCta.label}
                         onChange={(event) =>
@@ -2028,7 +2077,7 @@ const AdminApp: React.FC = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <span>Primary CTA Href</span>
+                      <span>{t('Primær CTA-lenke', 'Primary CTA Href')}</span>
                       <input
                         value={panel.primaryCta.href}
                         onChange={(event) =>
@@ -2043,7 +2092,7 @@ const AdminApp: React.FC = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <span>Secondary CTA Label</span>
+                      <span>{t('Sekundær CTA-tekst', 'Secondary CTA Label')}</span>
                       <input
                         value={panel.secondaryCta?.label ?? ''}
                         onChange={(event) =>
@@ -2058,7 +2107,7 @@ const AdminApp: React.FC = () => {
                       />
                     </label>
                     <label className="admin-field">
-                      <span>Secondary CTA Href</span>
+                      <span>{t('Sekundær CTA-lenke', 'Secondary CTA Href')}</span>
                       <input
                         value={panel.secondaryCta?.href ?? ''}
                         onChange={(event) =>
@@ -2085,7 +2134,7 @@ const AdminApp: React.FC = () => {
                         }))
                       }
                     />
-                    <span>Hero Panel</span>
+                    <span>{t('Hero-panel', 'Hero Panel')}</span>
                   </label>
                 </article>
               );
@@ -2095,13 +2144,13 @@ const AdminApp: React.FC = () => {
 
         <section className="admin-section">
           <div className="admin-section-header">
-            <h2>Advanced JSON</h2>
+            <h2>{t('Avansert JSON', 'Advanced JSON')}</h2>
             <div className="admin-subcard-actions">
               <button type="button" className="admin-secondary-button" onClick={syncFormToJson}>
-                Sync From Form
+                {t('Synk fra skjema', 'Sync From Form')}
               </button>
               <button type="button" className="admin-secondary-button" onClick={applyJsonToForm}>
-                Apply JSON To Form
+                {t('Bruk JSON i skjema', 'Apply JSON To Form')}
               </button>
             </div>
           </div>
@@ -2110,21 +2159,21 @@ const AdminApp: React.FC = () => {
             value={jsonDraft}
             onChange={(event) => setJsonDraft(event.target.value)}
             spellCheck={false}
-            aria-label="CMS JSON editor"
+            aria-label={t('CMS JSON-editor', 'CMS JSON editor')}
           />
         </section>
 
         <section className="admin-revisions">
-          <h2>Revision History</h2>
+          <h2>{t('Revisjonshistorikk', 'Revision History')}</h2>
           {revisions.length === 0 ? (
-            <p>No revisions yet.</p>
+            <p>{t('Ingen revisjoner ennå.', 'No revisions yet.')}</p>
           ) : (
             <ul>
               {revisions.slice(0, 20).map((revision) => (
                 <li key={revision.id}>
-                  <span>{revision.createdAt ? new Date(revision.createdAt).toLocaleString() : revision.id}</span>
+                  <span>{revision.createdAt ? new Date(revision.createdAt).toLocaleString(language === 'no' ? 'nb-NO' : 'en-US') : revision.id}</span>
                   <button type="button" onClick={() => handleRestoreRevision(revision.id)} className="admin-secondary-button" disabled={isBusy}>
-                    Restore
+                    {t('Gjenopprett', 'Restore')}
                   </button>
                 </li>
               ))}
