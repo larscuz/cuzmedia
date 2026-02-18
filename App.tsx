@@ -662,16 +662,6 @@ const SiteApp: React.FC = () => {
     setLanguage((current) => (current === 'en' ? 'no' : 'en'));
   }, []);
 
-  const getCmsForEditor = useCallback(
-    (cms: CmsConfig) => {
-      if (language === 'no') {
-        return localizeCmsConfig(cms, 'no');
-      }
-      return cms;
-    },
-    [language]
-  );
-
   const renderAction = useCallback(
     (cta: CtaLink, className?: string) => {
       if (cta.href.startsWith('#')) {
@@ -1113,6 +1103,16 @@ const AdminApp: React.FC = () => {
   const toggleLanguage = useCallback(() => {
     setLanguage((current) => (current === 'en' ? 'no' : 'en'));
   }, []);
+
+  const getCmsForEditor = useCallback(
+    (cms: CmsConfig) => {
+      if (language === 'no') {
+        return localizeCmsConfig(cms, 'no');
+      }
+      return cms;
+    },
+    [language]
+  );
 
   const uploadKindLabel = useCallback(
     (kind: UploadKind) => {
