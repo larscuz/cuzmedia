@@ -662,6 +662,16 @@ const SiteApp: React.FC = () => {
     setLanguage((current) => (current === 'en' ? 'no' : 'en'));
   }, []);
 
+  const getCmsForEditor = useCallback(
+    (cms: CmsConfig) => {
+      if (language === 'no') {
+        return localizeCmsConfig(cms, 'no');
+      }
+      return cms;
+    },
+    [language]
+  );
+
   const renderAction = useCallback(
     (cta: CtaLink, className?: string) => {
       if (cta.href.startsWith('#')) {
@@ -1138,10 +1148,11 @@ const AdminApp: React.FC = () => {
         throw new Error(t('Ugyldig CMS-payload fra serveren', 'Invalid CMS payload returned from server'));
       }
 
-      setDraftCms(nextCms);
-      setJsonDraft(`${JSON.stringify(nextCms, null, 2)}\n`);
+      const editorCms = getCmsForEditor(nextCms);
+      setDraftCms(editorCms);
+      setJsonDraft(`${JSON.stringify(editorCms, null, 2)}\n`);
     },
-    [t]
+    [getCmsForEditor, t]
   );
 
   const loadRevisions = useCallback(
@@ -1742,7 +1753,7 @@ const AdminApp: React.FC = () => {
         throw new Error(t('Ugyldig CMS JSON-struktur', 'Invalid CMS JSON shape'));
       }
 
-      setDraftCms(parsed);
+      setDraftCms(getCmsForEditor(parsed));
       setStatusMessage(t('Brukte JSON i visuelt skjema.', 'Applied JSON into visual form.'));
       setErrorMessage(null);
     } catch (error) {
