@@ -48,8 +48,29 @@ type RevisionRecord = {
 };
 
 type UploadKind = 'video' | 'image';
+type SiteLanguage = 'no' | 'en';
+
+type PanelCopyOverride = {
+  client?: string;
+  title?: string;
+  description?: string;
+  primaryCtaLabel?: string;
+  secondaryCtaLabel?: string;
+};
+
+type SiteUiCopy = {
+  menuLabel: string;
+  closeLabel: string;
+  primaryNavLabel: string;
+  cmsFallbackPrefix: string;
+  wheelProgressLabel: string;
+  toggleEnglishLabel: string;
+  toggleNorwegianLabel: string;
+  homeAriaLabel: (brandName: string) => string;
+};
 
 const ADMIN_TOKEN_STORAGE_KEY = 'cuz-cms-admin-token';
+const SITE_LANGUAGE_STORAGE_KEY = 'cuz-site-language';
 const CMS_API_BASE = (import.meta.env.VITE_CMS_API_BASE ?? '').trim().replace(/\/+$/, '');
 const CMS_STATIC_SNAPSHOT_PATH = '/cms.json';
 
@@ -323,6 +344,175 @@ const createDefaultCmsConfig = (): CmsConfig => ({
   navItems: DEFAULT_NAV_ITEMS.map((item) => ({ ...item, panelIds: [...item.panelIds] })),
 });
 
+const NORWEGIAN_SETTINGS_OVERRIDES: Partial<SiteSettings> = {
+  siteTitle: 'Cuz Media | AI-først kreativ produksjon',
+  siteDescription: 'Cuz Media er et AI-først kreativt produksjonsstudio som bygger kampanjer, visningsfilmer og digitale merkevareunivers.',
+  brandSubline: 'Produksjon',
+  headerCtaLabel: 'Start et prosjekt',
+  spinHint: 'Scroll, sveip eller bruk piltastene for å spinne det store hjulet',
+};
+
+const NORWEGIAN_NAV_LABELS_BY_ID: Record<string, string> = {
+  showreel: 'Visningsfilm',
+  work: 'Prosjekter',
+  engine: 'Motor',
+  contact: 'Kontakt',
+};
+
+const NORWEGIAN_TEXT_MAP: Record<string, string> = {
+  'Start a Project': 'Start et prosjekt',
+  'Start A Project': 'Start et prosjekt',
+  'Watch Showreel': 'Se visningsfilm',
+  'See Services': 'Se tjenester',
+  'View Project': 'Se prosjekt',
+  'All Work': 'Alle prosjekter',
+  'How We Work': 'Hvordan vi jobber',
+  'Explore Engine': 'Utforsk motoren',
+  'Email Cuz Media': 'Send e-post til Cuz Media',
+  Work: 'Prosjekter',
+  Engine: 'Motor',
+  Contact: 'Kontakt',
+  Showreel: 'Visningsfilm',
+};
+
+const NORWEGIAN_PANEL_OVERRIDES: Record<string, PanelCopyOverride> = {
+  showreel: {
+    title: 'AI-først kreativ produksjon med lærlinger',
+    description:
+      'Cuz Media kombinerer AI-først kreativ produksjon med lærlinger i kjernen og leverer kvalitetssikret produksjon til lavere kostnad.',
+    primaryCtaLabel: 'Se visningsfilm',
+    secondaryCtaLabel: 'Se tjenester',
+  },
+  arch: {
+    title: 'Intelligenspartiet',
+    description:
+      'Intelligenspartiet lanseres som et AI-drevet medieprosjekt som utforsker erstatningsangst i en tid med ny automatisering.',
+    primaryCtaLabel: 'Se prosjekt',
+    secondaryCtaLabel: 'Alle prosjekter',
+  },
+  void: {
+    description: 'Norsk og internasjonal katalog over AI-først kreative byråer.',
+    primaryCtaLabel: 'Se prosjekt',
+    secondaryCtaLabel: 'Hvordan vi jobber',
+  },
+  'munch-studio': {
+    description: 'Kreativt stillbilde fra Munch Studio.',
+    primaryCtaLabel: 'Se prosjekt',
+    secondaryCtaLabel: 'Alle prosjekter',
+  },
+  deichman: {
+    description: 'Kampanjestill for Deichman-prosjektet.',
+    primaryCtaLabel: 'Se prosjekt',
+    secondaryCtaLabel: 'Alle prosjekter',
+  },
+  'cnn-cuz': {
+    description: 'Redaksjonelt stillbilde fra Cuz-evolusjonen.',
+    primaryCtaLabel: 'Se prosjekt',
+    secondaryCtaLabel: 'Alle prosjekter',
+  },
+  engine: {
+    client: 'Cuz Media-systemer',
+    title: 'AI-innholdsmotor',
+    description:
+      'Fra idé til distribusjon bruker vi repeterbare AI-arbeidsflyter for å gjøre én idé om til komplette innholdspakker for alle kanaler.',
+    primaryCtaLabel: 'Utforsk motoren',
+    secondaryCtaLabel: 'Start et prosjekt',
+  },
+  contact: {
+    client: 'Start et prosjekt',
+    title: 'La oss bygge din neste kampanje',
+    description: 'Fortell oss om tidslinje, mål og budsjett. Vi sender anbefalt opplegg og produksjonsplan innen 48 timer.',
+    primaryCtaLabel: 'Send e-post til Cuz Media',
+  },
+};
+
+const SITE_UI_COPY: Record<SiteLanguage, SiteUiCopy> = {
+  no: {
+    menuLabel: 'Meny',
+    closeLabel: 'Lukk',
+    primaryNavLabel: 'Primærnavigasjon',
+    cmsFallbackPrefix: 'CMS-reserve aktiv: ',
+    wheelProgressLabel: 'Hjulstatus',
+    toggleEnglishLabel: 'Toggle English',
+    toggleNorwegianLabel: 'Bytt til norsk',
+    homeAriaLabel: (brandName: string) => `Gå til forsiden for ${brandName}`,
+  },
+  en: {
+    menuLabel: 'Menu',
+    closeLabel: 'Close',
+    primaryNavLabel: 'Primary navigation',
+    cmsFallbackPrefix: 'CMS fallback active: ',
+    wheelProgressLabel: 'Wheel progress',
+    toggleEnglishLabel: 'Toggle English',
+    toggleNorwegianLabel: 'Switch to Norwegian',
+    homeAriaLabel: (brandName: string) => `Go to ${brandName} home`,
+  },
+};
+
+const translateToNorwegian = (value: string) => NORWEGIAN_TEXT_MAP[value] ?? value;
+
+const localizeSettings = (settings: SiteSettings, language: SiteLanguage): SiteSettings => {
+  if (language === 'en') {
+    return settings;
+  }
+
+  return {
+    ...settings,
+    siteTitle: NORWEGIAN_SETTINGS_OVERRIDES.siteTitle ?? settings.siteTitle,
+    siteDescription: NORWEGIAN_SETTINGS_OVERRIDES.siteDescription ?? settings.siteDescription,
+    brandSubline: NORWEGIAN_SETTINGS_OVERRIDES.brandSubline ?? settings.brandSubline,
+    headerCtaLabel: NORWEGIAN_SETTINGS_OVERRIDES.headerCtaLabel ?? translateToNorwegian(settings.headerCtaLabel),
+    spinHint: NORWEGIAN_SETTINGS_OVERRIDES.spinHint ?? settings.spinHint,
+  };
+};
+
+const localizePanel = (panel: ShowcasePanel, language: SiteLanguage): ShowcasePanel => {
+  if (language === 'en') {
+    return panel;
+  }
+
+  const copyOverride = NORWEGIAN_PANEL_OVERRIDES[panel.id];
+  return {
+    ...panel,
+    client: copyOverride?.client ?? translateToNorwegian(panel.client),
+    title: copyOverride?.title ?? translateToNorwegian(panel.title),
+    description: copyOverride?.description ?? translateToNorwegian(panel.description),
+    primaryCta: {
+      ...panel.primaryCta,
+      label: copyOverride?.primaryCtaLabel ?? translateToNorwegian(panel.primaryCta.label),
+    },
+    secondaryCta: panel.secondaryCta
+      ? {
+          ...panel.secondaryCta,
+          label: copyOverride?.secondaryCtaLabel ?? translateToNorwegian(panel.secondaryCta.label),
+        }
+      : undefined,
+  };
+};
+
+const localizeNavItem = (item: NavItem, language: SiteLanguage): NavItem => {
+  if (language === 'en') {
+    return item;
+  }
+
+  return {
+    ...item,
+    label: NORWEGIAN_NAV_LABELS_BY_ID[item.id] ?? translateToNorwegian(item.label),
+  };
+};
+
+const localizeCmsConfig = (config: CmsConfig, language: SiteLanguage): CmsConfig => {
+  if (language === 'en') {
+    return config;
+  }
+
+  return {
+    settings: localizeSettings(config.settings, language),
+    panels: config.panels.map((panel) => localizePanel(panel, language)),
+    navItems: config.navItems.map((item) => localizeNavItem(item, language)),
+  };
+};
+
 const isCmsConfig = (value: unknown): value is CmsConfig => {
   if (!value || typeof value !== 'object') {
     return false;
@@ -346,6 +536,12 @@ const SiteApp: React.FC = () => {
 
   const [cmsConfig, setCmsConfig] = useState<CmsConfig>(() => createDefaultCmsConfig());
   const [cmsError, setCmsError] = useState<string | null>(null);
+  const [language, setLanguage] = useState<SiteLanguage>(() => {
+    if (typeof window === 'undefined') {
+      return 'no';
+    }
+    return window.localStorage.getItem(SITE_LANGUAGE_STORAGE_KEY) === 'en' ? 'en' : 'no';
+  });
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -353,9 +549,13 @@ const SiteApp: React.FC = () => {
   const [spinDirection, setSpinDirection] = useState<1 | -1>(1);
   const [wheelRotation, setWheelRotation] = useState(0);
 
-  const settings = cmsConfig.settings;
-  const panels = cmsConfig.panels.length > 0 ? cmsConfig.panels : DEFAULT_PANELS;
-  const navItems = cmsConfig.navItems.length > 0 ? cmsConfig.navItems : DEFAULT_NAV_ITEMS;
+  const uiCopy = SITE_UI_COPY[language];
+  const localizedDefaultCmsConfig = useMemo(() => localizeCmsConfig(createDefaultCmsConfig(), language), [language]);
+  const localizedCmsConfig = useMemo(() => localizeCmsConfig(cmsConfig, language), [cmsConfig, language]);
+
+  const settings = localizedCmsConfig.settings;
+  const panels = localizedCmsConfig.panels.length > 0 ? localizedCmsConfig.panels : localizedDefaultCmsConfig.panels;
+  const navItems = localizedCmsConfig.navItems.length > 0 ? localizedCmsConfig.navItems : localizedDefaultCmsConfig.navItems;
 
   const panelCount = panels.length;
   const segmentAngle = panelCount > 0 ? 360 / panelCount : 0;
@@ -458,6 +658,10 @@ const SiteApp: React.FC = () => {
     [activeIndex, panels]
   );
 
+  const toggleLanguage = useCallback(() => {
+    setLanguage((current) => (current === 'en' ? 'no' : 'en'));
+  }, []);
+
   const renderAction = useCallback(
     (cta: CtaLink, className?: string) => {
       if (cta.href.startsWith('#')) {
@@ -512,6 +716,11 @@ const SiteApp: React.FC = () => {
       descriptionTag.setAttribute('content', settings.siteDescription);
     }
   }, [settings.accentColor, settings.siteDescription, settings.siteTitle]);
+
+  useEffect(() => {
+    window.localStorage.setItem(SITE_LANGUAGE_STORAGE_KEY, language);
+    document.documentElement.setAttribute('lang', language === 'no' ? 'nb' : 'en');
+  }, [language]);
 
   useEffect(() => {
     let cancelled = false;
@@ -643,12 +852,12 @@ const SiteApp: React.FC = () => {
           className="brand-lockup"
           onClick={() => spinToPanel('showreel')}
           type="button"
-          aria-label={`Go to ${settings.brandName} home`}
+          aria-label={uiCopy.homeAriaLabel(settings.brandName)}
         >
           <img className="brand-logo" src="/cuz-logo.png" alt="" aria-hidden="true" />
         </button>
 
-        <nav className="glass-shell desktop-nav" aria-label="Primary">
+        <nav className="glass-shell desktop-nav" aria-label={uiCopy.primaryNavLabel}>
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -675,6 +884,10 @@ const SiteApp: React.FC = () => {
           LinkedIn
           <span className="arrow-chip">{'>'}</span>
         </a>
+        <button className="glass-button language-toggle" type="button" onClick={toggleLanguage} aria-pressed={language === 'en'}>
+          {language === 'en' ? uiCopy.toggleNorwegianLabel : uiCopy.toggleEnglishLabel}
+          <span className="arrow-chip">{language === 'en' ? 'NO' : 'EN'}</span>
+        </button>
 
         <button
           className="glass-button menu-toggle"
@@ -683,7 +896,7 @@ const SiteApp: React.FC = () => {
           aria-expanded={menuOpen}
           aria-controls="mobile-menu"
         >
-          {menuOpen ? 'Close' : 'Menu'}
+          {menuOpen ? uiCopy.closeLabel : uiCopy.menuLabel}
           <span className="arrow-chip">{menuOpen ? 'X' : '='}</span>
         </button>
       </header>
@@ -713,9 +926,21 @@ const SiteApp: React.FC = () => {
           LinkedIn
           <span className="arrow-chip">{'>'}</span>
         </a>
+        <button
+          className="glass-button mobile-cta language-toggle-mobile"
+          type="button"
+          onClick={() => {
+            toggleLanguage();
+            setMenuOpen(false);
+          }}
+          aria-pressed={language === 'en'}
+        >
+          {language === 'en' ? uiCopy.toggleNorwegianLabel : uiCopy.toggleEnglishLabel}
+          <span className="arrow-chip">{language === 'en' ? 'NO' : 'EN'}</span>
+        </button>
       </div>
 
-      {cmsError ? <p className="cms-warning">CMS fallback active: {cmsError}</p> : null}
+      {cmsError ? <p className="cms-warning">{uiCopy.cmsFallbackPrefix}{cmsError}</p> : null}
 
       <main className="wheel-main">
         <div className="ambient-media" aria-hidden>
@@ -780,7 +1005,7 @@ const SiteApp: React.FC = () => {
         <p className="spin-hint">{settings.spinHint}</p>
       </main>
 
-      <aside className="thumbnail-wheel" aria-label="Wheel progress">
+      <aside className="thumbnail-wheel" aria-label={uiCopy.wheelProgressLabel}>
         <div className="thumbnail-wheel-track" style={{ transform: `rotate(${thumbnailRotation}deg)` }}>
           <svg className="thumbnail-wheel-svg" viewBox="0 0 100 100" role="presentation">
             <defs>
