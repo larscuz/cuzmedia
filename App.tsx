@@ -1,5 +1,5 @@
 import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import nominationBadge from './gullhaien/Nominert2026.jpeg';
+import nominationBadge from './gullhaien/nominert.png';
 
 type CtaLink = {
   label: string;
@@ -608,6 +608,7 @@ const SiteApp: React.FC = () => {
   const settings = localizedCmsConfig.settings;
   const panels = localizedCmsConfig.panels.length > 0 ? localizedCmsConfig.panels : localizedDefaultCmsConfig.panels;
   const navItems = localizedCmsConfig.navItems.length > 0 ? localizedCmsConfig.navItems : localizedDefaultCmsConfig.navItems;
+  const headerNavItems = navItems.filter((item) => item.id === 'contact');
 
   const panelCount = panels.length;
   const segmentAngle = panelCount > 0 ? 360 / panelCount : 0;
@@ -621,6 +622,7 @@ const SiteApp: React.FC = () => {
   const closeMediaLabel = language === 'no' ? 'Lukk' : 'Close';
   const modalVideoLabel = language === 'no' ? 'Video' : 'Video';
   const modalStillLabel = language === 'no' ? 'Stillbilde' : 'Still image';
+  const languageToggleLabel = language === 'en' ? 'NO' : 'EN';
 
   const reelLabelMaxChars = useMemo(() => {
     const labelRadius = 20.6;
@@ -720,28 +722,6 @@ const SiteApp: React.FC = () => {
   const toggleLanguage = useCallback(() => {
     setLanguage((current) => (current === 'en' ? 'no' : 'en'));
   }, []);
-
-  const renderAction = useCallback(
-    (cta: CtaLink, className?: string) => {
-      if (cta.href.startsWith('#')) {
-        const targetId = cta.href.slice(1);
-        return (
-          <button type="button" className={className} onClick={() => spinToPanel(targetId)}>
-            {cta.label}
-            <span className="arrow-chip">{'>'}</span>
-          </button>
-        );
-      }
-
-      return (
-        <a className={className} href={cta.href}>
-          {cta.label}
-          <span className="arrow-chip">{'>'}</span>
-        </a>
-      );
-    },
-    [spinToPanel]
-  );
 
   const openMediaModal = useCallback((panelId: string) => {
     setMediaModalPanelId(panelId);
@@ -924,6 +904,7 @@ const SiteApp: React.FC = () => {
   };
 
   const activePoster = activePanel ? getPanelMediaSources(activePanel).posterSrc : DEFAULT_PANELS[0].fallbackPosterSrc;
+  const activePanelMedia = activePanel ? getPanelMediaSources(activePanel) : null;
   const modalMedia = modalPanel ? getPanelMediaSources(modalPanel) : null;
 
   return (
@@ -939,7 +920,7 @@ const SiteApp: React.FC = () => {
         </button>
 
         <nav className="glass-shell desktop-nav" aria-label={uiCopy.primaryNavLabel}>
-          {navItems.map((item) => (
+          {headerNavItems.map((item) => (
             <button
               key={item.id}
               type="button"
@@ -957,17 +938,12 @@ const SiteApp: React.FC = () => {
           ))}
         </nav>
 
-        <a className="glass-button cta-desktop" href={settings.headerCtaHref}>
-          {settings.headerCtaLabel}
-          <span className="arrow-chip">{'>'}</span>
-        </a>
         <a className="glass-button cta-desktop cta-linkedin" href={LINKEDIN_URL} target="_blank" rel="noreferrer">
           LinkedIn
           <span className="arrow-chip">{'>'}</span>
         </a>
-        <button className="glass-button language-toggle" type="button" onClick={toggleLanguage} aria-pressed={language === 'en'}>
-          {language === 'en' ? uiCopy.toggleNorwegianLabel : uiCopy.toggleEnglishLabel}
-          <span className="arrow-chip">{language === 'en' ? 'NO' : 'EN'}</span>
+        <button className="glass-button language-toggle language-toggle-compact" type="button" onClick={toggleLanguage} aria-pressed={language === 'en'}>
+          {languageToggleLabel}
         </button>
 
         <button
@@ -983,7 +959,7 @@ const SiteApp: React.FC = () => {
       </header>
 
       <div className={`mobile-drawer ${menuOpen ? 'open' : ''}`} id="mobile-menu">
-        {navItems.map((item) => (
+        {headerNavItems.map((item) => (
           <button
             key={item.id}
             className="mobile-link"
@@ -999,16 +975,12 @@ const SiteApp: React.FC = () => {
             <span>{'>'}</span>
           </button>
         ))}
-        <a className="glass-button mobile-cta" href={settings.headerCtaHref} onClick={() => setMenuOpen(false)}>
-          {settings.headerCtaLabel}
-          <span className="arrow-chip">{'>'}</span>
-        </a>
         <a className="glass-button mobile-cta linkedin-cta" href={LINKEDIN_URL} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)}>
           LinkedIn
           <span className="arrow-chip">{'>'}</span>
         </a>
         <button
-          className="glass-button mobile-cta language-toggle-mobile"
+          className="glass-button mobile-cta language-toggle-mobile language-toggle-compact"
           type="button"
           onClick={() => {
             toggleLanguage();
@@ -1016,14 +988,25 @@ const SiteApp: React.FC = () => {
           }}
           aria-pressed={language === 'en'}
         >
-          {language === 'en' ? uiCopy.toggleNorwegianLabel : uiCopy.toggleEnglishLabel}
-          <span className="arrow-chip">{language === 'en' ? 'NO' : 'EN'}</span>
+          {languageToggleLabel}
         </button>
       </div>
 
       {cmsError ? <p className="cms-warning">{uiCopy.cmsFallbackPrefix}{cmsError}</p> : null}
 
       <main className="wheel-main">
+        {activePanel && activePanelMedia ? (
+          <button
+            type="button"
+            className="glass-button media-center-button"
+            onClick={() => openMediaModal(activePanel.id)}
+            aria-label={`${openMediaAriaPrefix} ${activePanel.title}`}
+          >
+            {openMediaLabel}
+            <span className="arrow-chip">{'▶'}</span>
+          </button>
+        ) : null}
+
         <div className="ambient-media" aria-hidden>
           <img src={activePoster} alt="" />
           <div className="ambient-overlay" />
@@ -1066,43 +1049,16 @@ const SiteApp: React.FC = () => {
                   </div>
 
                   <div className="panel-content">
-                    <div className="panel-topline">
-                      <p className="panel-eyebrow">{panel.client}</p>
-                      <button
-                        type="button"
-                        className="panel-playhead"
-                        onClick={() => openMediaModal(panel.id)}
-                        aria-label={`${openMediaAriaPrefix} ${panel.title}`}
-                      >
-                        <span className="panel-playhead-label">{openMediaLabel}</span>
-                        <span className="panel-playhead-icon" aria-hidden="true">
-                          {'▶'}
-                        </span>
-                      </button>
-                    </div>
+                    <p className="panel-eyebrow">{panel.client}</p>
                     {panel.hero ? <h1 className="panel-title">{panel.title}</h1> : <h2 className="panel-title">{panel.title}</h2>}
                     <p className="panel-description">{panel.description}</p>
-                    <div className="panel-actions">
-                      {renderAction(panel.primaryCta, 'glass-button')}
-                      {panel.secondaryCta ? renderAction(panel.secondaryCta, 'glass-button ghost-button') : null}
-                    </div>
                   </div>
                 </article>
               );
             })}
           </div>
         </section>
-
-        <p className="spin-hint">{settings.spinHint}</p>
       </main>
-
-      {showNominationBadge ? (
-        <img
-          className={`nomination-badge ${activeIndex === 2 ? 'nomination-badge-panel-three' : ''}`}
-          src={nominationBadge}
-          alt="Gullhaien 2026 nominert"
-        />
-      ) : null}
 
       {modalPanel && modalMedia ? (
         <div className="media-modal" role="dialog" aria-modal="true" aria-labelledby="media-modal-title" onClick={closeMediaModal}>
@@ -1137,76 +1093,86 @@ const SiteApp: React.FC = () => {
         </div>
       ) : null}
 
-      <aside className="thumbnail-wheel" aria-label={uiCopy.wheelProgressLabel}>
-        <div className="thumbnail-wheel-track" style={{ transform: `rotate(${thumbnailRotation}deg)` }}>
-          <svg className="thumbnail-wheel-svg" viewBox="0 0 100 100" role="presentation">
-            <defs>
-              {panels.map((panel) => {
+      {showNominationBadge ? (
+        <img
+          className="nomination-badge"
+          src={nominationBadge}
+          alt="Gullhaien nominert"
+        />
+      ) : null}
+
+      <div className="thumbnail-stack">
+        <aside className="thumbnail-wheel" aria-label={uiCopy.wheelProgressLabel}>
+          <div className="thumbnail-wheel-track" style={{ transform: `rotate(${thumbnailRotation}deg)` }}>
+            <svg className="thumbnail-wheel-svg" viewBox="0 0 100 100" role="presentation">
+              <defs>
+                {panels.map((panel) => {
+                  return (
+                    <clipPath key={`clip-${panel.id}`} id={`thumb-window-${panel.id}`} clipPathUnits="userSpaceOnUse">
+                      <rect x="43.4" y="4.9" width="13.2" height="15.4" rx="2.15" ry="2.15" />
+                    </clipPath>
+                  );
+                })}
+              </defs>
+              <circle className="thumbnail-reel-shell" cx="50" cy="50" r="49.2" />
+              <circle className="thumbnail-reel-inner-ring" cx="50" cy="50" r="31" />
+
+              {panels.map((panel, index) => {
+                const thumbnailSrc = getConfiguredMediaUrl(panel.posterPath) ?? panel.fallbackPosterSrc;
+                const panelAngle = index * thumbnailAngle;
+                const reelLabel = formatReelLabel(panel.title, reelLabelMaxChars);
+
                 return (
-                  <clipPath key={`clip-${panel.id}`} id={`thumb-window-${panel.id}`} clipPathUnits="userSpaceOnUse">
-                    <rect x="43.4" y="4.9" width="13.2" height="15.4" rx="2.15" ry="2.15" />
-                  </clipPath>
+                  <g
+                    key={`thumb-${panel.id}`}
+                    className={`thumbnail-window ${index === activeIndex ? 'is-active' : ''}`}
+                    transform={`rotate(${panelAngle} 50 50)`}
+                    onClick={() => spinToPanel(panel.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        spinToPanel(panel.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={panel.title}
+                  >
+                    <rect className="thumbnail-window-tab" x="48.6" y="0.85" width="2.8" height="5.65" rx="0.64" ry="0.64" />
+                    <rect className="thumbnail-window-frame" x="42.9" y="4.4" width="14.2" height="16.4" rx="2.6" ry="2.6" />
+                    <image
+                      className="thumbnail-window-image"
+                      href={thumbnailSrc}
+                      x="43.4"
+                      y="4.9"
+                      width="13.2"
+                      height="15.4"
+                      preserveAspectRatio="xMidYMid slice"
+                      clipPath={`url(#thumb-window-${panel.id})`}
+                    />
+                    <rect className="thumbnail-window-stroke" x="43.4" y="4.9" width="13.2" height="15.4" rx="2.15" ry="2.15" />
+                    <text className="thumbnail-window-label" x="50" y="29.4" textAnchor="middle">
+                      {reelLabel}
+                    </text>
+                  </g>
                 );
               })}
-            </defs>
-            <circle className="thumbnail-reel-shell" cx="50" cy="50" r="49.2" />
-            <circle className="thumbnail-reel-inner-ring" cx="50" cy="50" r="31" />
 
-            {panels.map((panel, index) => {
-              const thumbnailSrc = getConfiguredMediaUrl(panel.posterPath) ?? panel.fallbackPosterSrc;
-              const panelAngle = index * thumbnailAngle;
-              const reelLabel = formatReelLabel(panel.title, reelLabelMaxChars);
-
-              return (
-                <g
-                  key={`thumb-${panel.id}`}
-                  className={`thumbnail-window ${index === activeIndex ? 'is-active' : ''}`}
-                  transform={`rotate(${panelAngle} 50 50)`}
-                  onClick={() => spinToPanel(panel.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      spinToPanel(panel.id);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={panel.title}
-                >
-                  <rect className="thumbnail-window-tab" x="48.6" y="0.85" width="2.8" height="5.65" rx="0.64" ry="0.64" />
-                  <rect className="thumbnail-window-frame" x="42.9" y="4.4" width="14.2" height="16.4" rx="2.6" ry="2.6" />
-                  <image
-                    className="thumbnail-window-image"
-                    href={thumbnailSrc}
-                    x="43.4"
-                    y="4.9"
-                    width="13.2"
-                    height="15.4"
-                    preserveAspectRatio="xMidYMid slice"
-                    clipPath={`url(#thumb-window-${panel.id})`}
-                  />
-                  <rect className="thumbnail-window-stroke" x="43.4" y="4.9" width="13.2" height="15.4" rx="2.15" ry="2.15" />
-                  <text className="thumbnail-window-label" x="50" y="29.4" textAnchor="middle">
-                    {reelLabel}
-                  </text>
-                </g>
-              );
-            })}
-
-            <circle className="thumbnail-center-disc" cx="50" cy="50" r="16.2" />
-            <circle className="thumbnail-center-hole" cx="50" cy="50" r="2.3" />
-            <text className="thumbnail-brand" x="50" y="45.7" textAnchor="middle">
-              CUZ Media
-            </text>
-            <text className="thumbnail-active-title" x="50" y="51.3" textAnchor="middle">
-              {formatReelLabel(activePanel?.title ?? '', 20)}
-            </text>
-            <text className="thumbnail-count" x="50" y="56.6" textAnchor="middle">
-              {String(activeIndex + 1).padStart(2, '0')} / {String(panelCount).padStart(2, '0')}
-            </text>
-          </svg>
-        </div>
-      </aside>
+              <circle className="thumbnail-center-disc" cx="50" cy="50" r="16.2" />
+              <circle className="thumbnail-center-hole" cx="50" cy="50" r="2.3" />
+              <text className="thumbnail-brand" x="50" y="45.7" textAnchor="middle">
+                CUZ Media
+              </text>
+              <text className="thumbnail-active-title" x="50" y="51.3" textAnchor="middle">
+                {formatReelLabel(activePanel?.title ?? '', 20)}
+              </text>
+              <text className="thumbnail-count" x="50" y="56.6" textAnchor="middle">
+                {String(activeIndex + 1).padStart(2, '0')} / {String(panelCount).padStart(2, '0')}
+              </text>
+            </svg>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 };
