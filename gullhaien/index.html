@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    window.MEDIA = {
+      brand: 'CUZ MEDIA',
+      title: 'Gullhaien Juryvisning',
+      copy:
+        'Privat videovisning for Cuz Media. Oppdater MEDIA-blokken med riktig film, poster og nominasjonsbadge.',
+      videoUrl: './film.mp4',
+      posterUrl: './poster.png',
+      badgeImageUrl: './nominert.png',
+    };
+  </script>
+  <title></title>
+  <meta name="description" content="" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <meta property="og:title" content="" />
+  <meta property="og:description" content="" />
+  <meta property="og:type" content="video.other" />
+  <meta property="og:video" content="" />
+  <meta property="og:image" content="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <script>
+    (function applyHeadMediaConfig() {
+      const media = window.MEDIA;
+      const pageTitle = `${media.brand} | ${media.title}`;
+
+      document.title = pageTitle;
+      document
+        .querySelector('meta[name="description"]')
+        .setAttribute('content', media.copy);
+      document
+        .querySelector('meta[property="og:title"]')
+        .setAttribute('content', pageTitle);
+      document
+        .querySelector('meta[property="og:description"]')
+        .setAttribute('content', media.copy);
+      document
+        .querySelector('meta[property="og:video"]')
+        .setAttribute('content', media.videoUrl);
+      document
+        .querySelector('meta[property="og:image"]')
+        .setAttribute('content', media.posterUrl);
+    })();
+  </script>
+  <style>
+    :root {
+      --bg: #06080f;
+      --bg-soft: rgba(8, 11, 18, 0.92);
+      --ink: #f3f4f6;
+      --muted: rgba(243, 244, 246, 0.72);
+      --line: rgba(255, 255, 255, 0.12);
+      --red: #d71920;
+      --red-dark: #8f1015;
+      --panel: rgba(7, 10, 16, 0.8);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "Source Sans 3", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(215, 25, 32, 0.32), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(68, 112, 196, 0.24), transparent 30%),
+        linear-gradient(160deg, #04050a 0%, #0d111a 55%, #090d15 100%);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      width: min(1200px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: clamp(1.25rem, 2.5vw, 2rem) 0 2rem;
+    }
+
+    .hero {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--muted);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 800;
+      font-size: 0.82rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+    }
+
+    .brand span {
+      font-family: "Bebas Neue", sans-serif;
+      font-size: clamp(2rem, 4.5vw, 3.6rem);
+      letter-spacing: 0.04em;
+      line-height: 0.95;
+    }
+
+    .badge {
+      width: min(220px, 42vw);
+      max-width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.4));
+    }
+
+    .badge[hidden] {
+      display: none;
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: 0.5rem;
+      max-width: 46rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Bebas Neue", sans-serif;
+      font-size: clamp(2.6rem, 6vw, 5.5rem);
+      line-height: 0.92;
+      letter-spacing: 0.03em;
+      text-wrap: balance;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+    }
+
+    .player-shell {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+      border: 1px solid var(--line);
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .player-stage {
+      position: relative;
+      background-color: #000;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      aspect-ratio: 16 / 9;
+    }
+
+    .player-stage video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+    }
+
+    .panel {
+      display: grid;
+      gap: 1rem;
+      padding: 1rem;
+      background: linear-gradient(180deg, var(--panel), rgba(7, 10, 16, 0.92));
+      border-top: 1px solid var(--line);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .button {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 0.85rem 1.15rem;
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-1px);
+    }
+
+    .button-primary {
+      background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+      color: #fff;
+    }
+
+    .button-secondary {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .meta {
+      display: grid;
+      gap: 0.5rem;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .meta strong {
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .status {
+      min-height: 1.25rem;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .direct-link {
+      word-break: break-all;
+    }
+
+    @media (max-width: 700px) {
+      .page {
+        width: min(100%, calc(100% - 1rem));
+      }
+
+      .player-shell {
+        border-radius: 1rem;
+      }
+
+      .panel {
+        padding: 0.9rem;
+      }
+
+      .button {
+        width: 100%;
+        text-align: center;
+      }
+
+      .badge {
+        width: min(180px, 52vw);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow" id="video-context">Gullhaien 2027 · Cuz Media</p>
+      <div class="hero-header">
+        <div class="brand">
+          <span id="brand-name">CUZ MEDIA</span>
+        </div>
+        <img
+          class="badge"
+          id="badge-image"
+          src="./nominert.png"
+          alt="Nominasjonsbadge"
+        />
+      </div>
+      <div class="hero-copy">
+        <h1 id="video-title">Gullhaien Juryvisning</h1>
+        <p id="video-copy">
+          Privat videovisning for Cuz Media. Oppdater MEDIA-blokken med riktig film,
+          poster og nominasjonsbadge.
+        </p>
+      </div>
+    </header>
+
+    <section class="player-shell" aria-labelledby="video-title">
+      <div class="player-stage" id="player-stage">
+        <video
+          id="jury-video"
+          controls
+          playsinline
+          preload="metadata"
+          poster="./poster.png"
+          aria-describedby="video-meta"
+        >
+          <source
+            id="video-source"
+            src="./film.mp4"
+            type="video/mp4"
+          />
+          Nettleseren din kan ikke spille av denne videoen. Bruk nedlastingslenken under.
+        </video>
+      </div>
+
+      <div class="panel">
+        <div class="actions">
+          <button type="button" class="button button-primary" id="fullscreen-button">
+            Fullskjerm
+          </button>
+          <a
+            class="button button-secondary"
+            id="download-button"
+            href="./film.mp4"
+            download="film.mp4"
+          >
+            Last ned video
+          </a>
+          <a
+            class="button button-secondary"
+            id="direct-button"
+            href="./film.mp4"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Åpne direkte MP4
+          </a>
+        </div>
+
+        <div class="meta" id="video-meta">
+          <div><strong>Tittel:</strong> <span id="video-title-meta">Gullhaien Juryvisning</span></div>
+          <div>
+            <strong>Direkte videolenke:</strong>
+            <a
+              class="direct-link"
+              id="direct-link"
+              href="./film.mp4"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ./film.mp4
+            </a>
+          </div>
+        </div>
+
+        <div class="status" id="download-status" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const media = window.MEDIA;
+    const video = document.getElementById('jury-video');
+    const videoSource = document.getElementById('video-source');
+    const playerStage = document.getElementById('player-stage');
+    const fullscreenButton = document.getElementById('fullscreen-button');
+    const downloadButton = document.getElementById('download-button');
+    const directButton = document.getElementById('direct-button');
+    const directLink = document.getElementById('direct-link');
+    const badgeImage = document.getElementById('badge-image');
+    const brandName = document.getElementById('brand-name');
+    const videoContext = document.getElementById('video-context');
+    const videoTitle = document.getElementById('video-title');
+    const videoTitleMeta = document.getElementById('video-title-meta');
+    const videoCopy = document.getElementById('video-copy');
+    const statusNode = document.getElementById('download-status');
+
+    function escapeCssUrl(value) {
+      return String(value).replace(/["\\]/g, '\\$&');
+    }
+
+    function getDownloadFilename(url, fallbackTitle) {
+      try {
+        const parsedUrl = new URL(url, window.location.href);
+        const lastSegment = parsedUrl.pathname.split('/').filter(Boolean).pop();
+        if (lastSegment) {
+          return decodeURIComponent(lastSegment);
+        }
+      } catch (error) {
+        // Fall through to the sanitized title fallback.
+      }
+
+      const baseName = String(fallbackTitle || 'video')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+      return `${baseName || 'video'}.mp4`;
+    }
+
+    function applyMediaConfig() {
+      const downloadFilename = getDownloadFilename(media.videoUrl, media.title);
+
+      brandName.textContent = media.brand;
+      videoContext.textContent = `Gullhaien 2027 · ${media.brand}`;
+      videoTitle.textContent = media.title;
+      videoTitleMeta.textContent = media.title;
+      videoCopy.textContent = media.copy;
+
+      playerStage.style.backgroundImage = `url("${escapeCssUrl(media.posterUrl)}")`;
+      video.poster = media.posterUrl;
+      videoSource.src = media.videoUrl;
+      video.load();
+
+      downloadButton.href = media.videoUrl;
+      downloadButton.setAttribute('download', downloadFilename);
+      directButton.href = media.videoUrl;
+      directLink.href = media.videoUrl;
+      directLink.textContent = media.videoUrl;
+
+      if (media.badgeImageUrl) {
+        badgeImage.hidden = false;
+        badgeImage.src = media.badgeImageUrl;
+        badgeImage.alt = `${media.title} badge`;
+      } else {
+        badgeImage.hidden = true;
+        badgeImage.removeAttribute('src');
+      }
+    }
+
+    applyMediaConfig();
+
+    function getFullscreenElement() {
+      return (
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement ||
+        null
+      );
+    }
+
+    async function startVideoPlayback() {
+      if (!video || !video.paused) return;
+
+      try {
+        await video.play();
+      } catch (error) {
+        // Ignore playback failures here; fullscreen fallback can still succeed.
+      }
+    }
+
+    async function requestTrueFullscreen() {
+      const target = playerStage || video;
+      if (!target) return;
+
+      if (getFullscreenElement()) {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+          return;
+        }
+
+        if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+          return;
+        }
+
+        return;
+      }
+
+      if (target.requestFullscreen) {
+        await target.requestFullscreen();
+        return;
+      }
+
+      if (video.requestFullscreen) {
+        await video.requestFullscreen();
+        return;
+      }
+
+      if (target.webkitRequestFullscreen) {
+        target.webkitRequestFullscreen();
+        return;
+      }
+
+      if (video.webkitRequestFullscreen) {
+        video.webkitRequestFullscreen();
+        return;
+      }
+
+      if (video.webkitEnterFullscreen) {
+        await startVideoPlayback();
+        video.webkitEnterFullscreen();
+        return;
+      }
+
+      if (video.webkitEnterFullScreen) {
+        await startVideoPlayback();
+        video.webkitEnterFullScreen();
+        return;
+      }
+
+      throw new Error('fullscreen unsupported');
+    }
+
+    async function handleDownload(event) {
+      event.preventDefault();
+      const href = downloadButton.href;
+      const filename = downloadButton.getAttribute('download') || getDownloadFilename(href, media.title);
+
+      statusNode.textContent = 'Forbereder nedlasting...';
+
+      try {
+        const response = await fetch(href, { mode: 'cors' });
+        if (!response.ok) {
+          throw new Error('download failed');
+        }
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const tempLink = document.createElement('a');
+        tempLink.href = blobUrl;
+        tempLink.download = filename;
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        tempLink.remove();
+        URL.revokeObjectURL(blobUrl);
+        statusNode.textContent = 'Nedlasting startet.';
+      } catch (error) {
+        window.open(href, '_blank', 'noopener,noreferrer');
+        statusNode.textContent = 'Direktelenken ble åpnet i ny fane.';
+      }
+    }
+
+    fullscreenButton.addEventListener('click', () => {
+      statusNode.textContent = '';
+      requestTrueFullscreen().catch(() => {
+        statusNode.textContent = 'Fullskjerm er ikke tilgjengelig i denne nettleseren.';
+        video.focus();
+      });
+    });
+
+    downloadButton.addEventListener('click', handleDownload);
+  </script>
+</body>
+</html>

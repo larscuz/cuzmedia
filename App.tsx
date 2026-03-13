@@ -1,4 +1,5 @@
 import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import nominationBadge from './gullhaien/Nominert2026.jpeg';
 
 type CtaLink = {
   label: string;
@@ -78,6 +79,7 @@ const SPIN_BASE_LOCK_MS = 780;
 const WHEEL_THRESHOLD = 90;
 const SWIPE_THRESHOLD = 50;
 const LINKEDIN_URL = 'https://www.linkedin.com/company/cuz-media-as/?viewAsMember=true';
+const NOMINATION_BADGE_PANEL_POSITIONS = new Set([0, 2]);
 
 const trimSlashes = (value: string) => value.replace(/^\/+|\/+$/g, '');
 const trimTrailingSlashes = (value: string) => value.replace(/\/+$/g, '');
@@ -145,6 +147,16 @@ const formatReelLabel = (value: string, maxChars = 18) => {
   const compact = value.replace(/\s+/g, ' ').trim();
   const limit = Math.max(3, maxChars);
   return compact.length > limit ? `${compact.slice(0, limit - 1)}…` : compact;
+};
+
+const getPanelMediaSources = (panel: ShowcasePanel) => {
+  const videoSrc = getConfiguredMediaUrl(panel.videoPath) ?? (panel.fallbackVideoSrc?.trim() ? panel.fallbackVideoSrc : null);
+  const posterSrc = getConfiguredMediaUrl(panel.posterPath) ?? panel.fallbackPosterSrc;
+
+  return {
+    videoSrc,
+    posterSrc,
+  };
 };
 
 const extractErrorMessage = async (response: Response) => {
@@ -544,6 +556,7 @@ const SiteApp: React.FC = () => {
   });
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [mediaModalPanelId, setMediaModalPanelId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinDirection, setSpinDirection] = useState<1 | -1>(1);
@@ -562,6 +575,13 @@ const SiteApp: React.FC = () => {
   const thumbnailAngle = panelCount > 0 ? 360 / panelCount : 0;
   const thumbnailRotation = wheelRotation;
   const activePanel = panels[activeIndex] ?? panels[0];
+  const modalPanel = mediaModalPanelId ? panels.find((panel) => panel.id === mediaModalPanelId) ?? null : null;
+  const showNominationBadge = NOMINATION_BADGE_PANEL_POSITIONS.has(activeIndex);
+  const openMediaLabel = language === 'no' ? 'Media' : 'Media';
+  const openMediaAriaPrefix = language === 'no' ? 'Apne media for' : 'Open media for';
+  const closeMediaLabel = language === 'no' ? 'Lukk' : 'Close';
+  const modalVideoLabel = language === 'no' ? 'Video' : 'Video';
+  const modalStillLabel = language === 'no' ? 'Stillbilde' : 'Still image';
 
   const reelLabelMaxChars = useMemo(() => {
     const labelRadius = 20.6;
@@ -684,6 +704,15 @@ const SiteApp: React.FC = () => {
     [spinToPanel]
   );
 
+  const openMediaModal = useCallback((panelId: string) => {
+    setMediaModalPanelId(panelId);
+    setMenuOpen(false);
+  }, []);
+
+  const closeMediaModal = useCallback(() => {
+    setMediaModalPanelId(null);
+  }, []);
+
   useEffect(() => {
     activeIndexRef.current = activeIndex;
   }, [activeIndex]);
@@ -700,6 +729,12 @@ const SiteApp: React.FC = () => {
       wheelAccumulatorRef.current = 0;
     }
   }, [activeIndex, panelCount]);
+
+  useEffect(() => {
+    if (mediaModalPanelId && !panels.some((panel) => panel.id === mediaModalPanelId)) {
+      setMediaModalPanelId(null);
+    }
+  }, [mediaModalPanelId, panels]);
 
   useEffect(() => {
     return () => {
@@ -777,7 +812,7 @@ const SiteApp: React.FC = () => {
 
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
-      if (isSpinningRef.current) {
+      if (isSpinningRef.current || mediaModalPanelId) {
         return;
       }
 
@@ -792,7 +827,7 @@ const SiteApp: React.FC = () => {
 
     stage.addEventListener('wheel', onWheel, { passive: false });
     return () => stage.removeEventListener('wheel', onWheel);
-  }, [spinBySteps]);
+  }, [mediaModalPanelId, spinBySteps]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -802,7 +837,15 @@ const SiteApp: React.FC = () => {
       }
 
       if (event.key === 'Escape') {
+        if (mediaModalPanelId) {
+          setMediaModalPanelId(null);
+          return;
+        }
         setMenuOpen(false);
+        return;
+      }
+
+      if (mediaModalPanelId) {
         return;
       }
 
@@ -819,7 +862,7 @@ const SiteApp: React.FC = () => {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [spinBySteps]);
+  }, [mediaModalPanelId, spinBySteps]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     touchStartYRef.current = event.changedTouches[0]?.clientY ?? null;
@@ -841,9 +884,8 @@ const SiteApp: React.FC = () => {
     spinBySteps(delta > 0 ? 1 : -1);
   };
 
-  const activePoster = activePanel
-    ? getConfiguredMediaUrl(activePanel.posterPath) ?? activePanel.fallbackPosterSrc
-    : DEFAULT_PANELS[0].fallbackPosterSrc;
+  const activePoster = activePanel ? getPanelMediaSources(activePanel).posterSrc : DEFAULT_PANELS[0].fallbackPosterSrc;
+  const modalMedia = modalPanel ? getPanelMediaSources(modalPanel) : null;
 
   return (
     <div className={`site-shell wheel-shell ${isSpinning ? 'is-spinning' : ''}`} data-spin-direction={spinDirection === 1 ? 'next' : 'prev'}>
@@ -951,10 +993,7 @@ const SiteApp: React.FC = () => {
         <section className="wheel-stage" ref={stageRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           <div className="big-wheel" style={{ transform: `translate(-50%, -50%) rotate(${wheelRotation}deg)` }}>
             {panels.map((panel, index) => {
-              const mediaVideoSrc = getConfiguredMediaUrl(panel.videoPath);
-              const fallbackVideoSrc = panel.fallbackVideoSrc?.trim() ? panel.fallbackVideoSrc : null;
-              const resolvedVideoSrc = mediaVideoSrc ?? fallbackVideoSrc;
-              const mediaPosterSrc = getConfiguredMediaUrl(panel.posterPath) ?? panel.fallbackPosterSrc;
+              const { videoSrc: resolvedVideoSrc, posterSrc: mediaPosterSrc } = getPanelMediaSources(panel);
               const panelAngle = index * segmentAngle;
               const distance = getCircularDistance(index, activeIndex, panelCount);
               const absDistance = Math.abs(distance);
@@ -988,7 +1027,20 @@ const SiteApp: React.FC = () => {
                   </div>
 
                   <div className="panel-content">
-                    <p className="panel-eyebrow">{panel.client}</p>
+                    <div className="panel-topline">
+                      <p className="panel-eyebrow">{panel.client}</p>
+                      <button
+                        type="button"
+                        className="panel-playhead"
+                        onClick={() => openMediaModal(panel.id)}
+                        aria-label={`${openMediaAriaPrefix} ${panel.title}`}
+                      >
+                        <span className="panel-playhead-label">{openMediaLabel}</span>
+                        <span className="panel-playhead-icon" aria-hidden="true">
+                          {'▶'}
+                        </span>
+                      </button>
+                    </div>
                     {panel.hero ? <h1 className="panel-title">{panel.title}</h1> : <h2 className="panel-title">{panel.title}</h2>}
                     <p className="panel-description">{panel.description}</p>
                     <div className="panel-actions">
@@ -1004,6 +1056,47 @@ const SiteApp: React.FC = () => {
 
         <p className="spin-hint">{settings.spinHint}</p>
       </main>
+
+      {showNominationBadge ? (
+        <img
+          className={`nomination-badge ${activeIndex === 2 ? 'nomination-badge-panel-three' : ''}`}
+          src={nominationBadge}
+          alt="Gullhaien 2026 nominert"
+        />
+      ) : null}
+
+      {modalPanel && modalMedia ? (
+        <div className="media-modal" role="dialog" aria-modal="true" aria-labelledby="media-modal-title" onClick={closeMediaModal}>
+          <div className="media-modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="media-modal-header">
+              <div>
+                <p className="media-modal-eyebrow">{modalPanel.client}</p>
+                <h2 className="media-modal-title" id="media-modal-title">
+                  {modalPanel.title}
+                </h2>
+              </div>
+              <button type="button" className="media-modal-close" onClick={closeMediaModal}>
+                {closeMediaLabel}
+              </button>
+            </div>
+            <div className="media-modal-stage">
+              <div className="media-modal-frame">
+                {modalMedia.videoSrc ? (
+                  <video controls autoPlay playsInline preload="metadata" poster={modalMedia.posterSrc}>
+                    <source src={modalMedia.videoSrc} type="video/mp4" />
+                  </video>
+                ) : (
+                  <img src={modalMedia.posterSrc} alt={modalPanel.title} />
+                )}
+              </div>
+            </div>
+            <div className="media-modal-meta">
+              <span>{modalMedia.videoSrc ? modalVideoLabel : modalStillLabel}</span>
+              <span>{closeMediaLabel} ESC</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <aside className="thumbnail-wheel" aria-label={uiCopy.wheelProgressLabel}>
         <div className="thumbnail-wheel-track" style={{ transform: `rotate(${thumbnailRotation}deg)` }}>
