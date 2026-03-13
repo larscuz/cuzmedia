@@ -1,5 +1,5 @@
 import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import nominationBadge from './gullhaien/nominert.png';
+import nominationBadge from './gullhaien/Nominert2026.jpeg';
 
 type CtaLink = {
   label: string;
