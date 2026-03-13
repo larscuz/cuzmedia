@@ -346,6 +346,9 @@ const DEFAULT_NAV_ITEMS: NavItem[] = [
   { id: 'contact', label: 'Contact', panelIds: ['contact'] },
 ];
 
+const DEFAULT_PANEL_BY_ID = new Map(DEFAULT_PANELS.map((panel) => [panel.id, panel]));
+const DEFAULT_NAV_ITEM_BY_ID = new Map(DEFAULT_NAV_ITEMS.map((item) => [item.id, item]));
+
 const createDefaultCmsConfig = (): CmsConfig => ({
   settings: { ...DEFAULT_SETTINGS },
   panels: DEFAULT_PANELS.map((panel) => ({
@@ -463,6 +466,24 @@ const SITE_UI_COPY: Record<SiteLanguage, SiteUiCopy> = {
 
 const translateToNorwegian = (value: string) => NORWEGIAN_TEXT_MAP[value] ?? value;
 
+const shouldApplyDefaultLocalization = (currentValue: string | undefined, defaultValue: string | undefined) => {
+  const normalizedCurrent = currentValue?.trim() ?? '';
+  if (!normalizedCurrent) {
+    return true;
+  }
+
+  const normalizedDefault = defaultValue?.trim() ?? '';
+  return Boolean(normalizedDefault) && normalizedCurrent === normalizedDefault;
+};
+
+const localizeTextValue = (currentValue: string | undefined, defaultValue: string | undefined, overrideValue?: string) => {
+  if (shouldApplyDefaultLocalization(currentValue, defaultValue)) {
+    return overrideValue ?? translateToNorwegian(currentValue ?? defaultValue ?? '');
+  }
+
+  return currentValue ?? '';
+};
+
 const localizeSettings = (settings: SiteSettings, language: SiteLanguage): SiteSettings => {
   if (language === 'en') {
     return settings;
@@ -470,11 +491,19 @@ const localizeSettings = (settings: SiteSettings, language: SiteLanguage): SiteS
 
   return {
     ...settings,
-    siteTitle: NORWEGIAN_SETTINGS_OVERRIDES.siteTitle ?? settings.siteTitle,
-    siteDescription: NORWEGIAN_SETTINGS_OVERRIDES.siteDescription ?? settings.siteDescription,
-    brandSubline: NORWEGIAN_SETTINGS_OVERRIDES.brandSubline ?? settings.brandSubline,
-    headerCtaLabel: NORWEGIAN_SETTINGS_OVERRIDES.headerCtaLabel ?? translateToNorwegian(settings.headerCtaLabel),
-    spinHint: NORWEGIAN_SETTINGS_OVERRIDES.spinHint ?? settings.spinHint,
+    siteTitle: localizeTextValue(settings.siteTitle, DEFAULT_SETTINGS.siteTitle, NORWEGIAN_SETTINGS_OVERRIDES.siteTitle),
+    siteDescription: localizeTextValue(
+      settings.siteDescription,
+      DEFAULT_SETTINGS.siteDescription,
+      NORWEGIAN_SETTINGS_OVERRIDES.siteDescription
+    ),
+    brandSubline: localizeTextValue(settings.brandSubline, DEFAULT_SETTINGS.brandSubline, NORWEGIAN_SETTINGS_OVERRIDES.brandSubline),
+    headerCtaLabel: localizeTextValue(
+      settings.headerCtaLabel,
+      DEFAULT_SETTINGS.headerCtaLabel,
+      NORWEGIAN_SETTINGS_OVERRIDES.headerCtaLabel
+    ),
+    spinHint: localizeTextValue(settings.spinHint, DEFAULT_SETTINGS.spinHint, NORWEGIAN_SETTINGS_OVERRIDES.spinHint),
   };
 };
 
@@ -484,19 +513,28 @@ const localizePanel = (panel: ShowcasePanel, language: SiteLanguage): ShowcasePa
   }
 
   const copyOverride = NORWEGIAN_PANEL_OVERRIDES[panel.id];
+  const defaultPanel = DEFAULT_PANEL_BY_ID.get(panel.id);
   return {
     ...panel,
-    client: copyOverride?.client ?? translateToNorwegian(panel.client),
-    title: copyOverride?.title ?? translateToNorwegian(panel.title),
-    description: copyOverride?.description ?? translateToNorwegian(panel.description),
+    client: localizeTextValue(panel.client, defaultPanel?.client, copyOverride?.client),
+    title: localizeTextValue(panel.title, defaultPanel?.title, copyOverride?.title),
+    description: localizeTextValue(panel.description, defaultPanel?.description, copyOverride?.description),
     primaryCta: {
       ...panel.primaryCta,
-      label: copyOverride?.primaryCtaLabel ?? translateToNorwegian(panel.primaryCta.label),
+      label: localizeTextValue(
+        panel.primaryCta.label,
+        defaultPanel?.primaryCta.label,
+        copyOverride?.primaryCtaLabel
+      ),
     },
     secondaryCta: panel.secondaryCta
       ? {
           ...panel.secondaryCta,
-          label: copyOverride?.secondaryCtaLabel ?? translateToNorwegian(panel.secondaryCta.label),
+          label: localizeTextValue(
+            panel.secondaryCta.label,
+            defaultPanel?.secondaryCta?.label,
+            copyOverride?.secondaryCtaLabel
+          ),
         }
       : undefined,
   };
@@ -507,9 +545,10 @@ const localizeNavItem = (item: NavItem, language: SiteLanguage): NavItem => {
     return item;
   }
 
+  const defaultItem = DEFAULT_NAV_ITEM_BY_ID.get(item.id);
   return {
     ...item,
-    label: NORWEGIAN_NAV_LABELS_BY_ID[item.id] ?? translateToNorwegian(item.label),
+    label: localizeTextValue(item.label, defaultItem?.label, NORWEGIAN_NAV_LABELS_BY_ID[item.id]),
   };
 };
 
